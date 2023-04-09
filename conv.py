@@ -81,3 +81,5 @@ def handle_ticket_info(request):
     else:
         print("Failed to get ticket info. Status code:", freshdesk_response.status_code)
         print("Error response:", freshdesk_response.text)
+    
+    return jsonify({"message": "Success"}), 200
