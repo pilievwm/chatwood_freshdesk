@@ -20,7 +20,7 @@ COPY .env ./
 EXPOSE 5000
 
 # Define environment variable
-ENV FLASK_APP=webhook_receiver.py
+ENV FLASK_APP=app.py
 
 # Run the command to start the Flask application
 CMD ["flask", "run", "--host=0.0.0.0"]
