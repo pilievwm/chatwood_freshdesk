@@ -1,12 +1,9 @@
 import requests
 import os
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify
+from flask import jsonify
 
 load_dotenv()
-
-
-app = Flask(__name__)
 
 CHAT_API_ACCESS_TOKEN = os.getenv("CHAT_API_ACCESS_TOKEN")
 CHAT_API_URL = os.getenv("CHAT_API_URL")
@@ -27,10 +24,8 @@ def send_private_note(conversation_id, content):
         headers={'api_access_token': CHAT_API_ACCESS_TOKEN}
     )
 
-
-@app.route('/create_ticket', methods=['POST'])
-def handle_webhook():
-    webhook_data = request.get_json()
+def handle_create_ticket(request):
+    webhook_data = request.json
 
     # Extract the ID from the webhook data
     conversation_id = webhook_data['id']
@@ -89,7 +84,7 @@ def handle_webhook():
 
     # Make a POST request to the Freshdesk API
     freshdesk_response = requests.post(
-        FRESHDESK_API_URL,
+        f"{FRESHDESK_API_URL}/tickets",
         json=ticket_data,
         auth=(FRESHDESK_API_KEY, "X")
     )
@@ -109,7 +104,7 @@ def handle_webhook():
 
         # Make a POST request to the Freshdesk Conversations API
         freshdesk_note_response = requests.post(
-            f"{FRESHDESK_API_URL}/{created_ticket_id}/notes",
+            f"{FRESHDESK_API_URL}/tickets/{created_ticket_id}/notes",
             json=note_data,
             auth=(FRESHDESK_API_KEY, "X")
         )
@@ -125,9 +120,3 @@ def handle_webhook():
         send_private_note(conversation_id, message)
 
     return jsonify({"status": "success"})
-
-
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
