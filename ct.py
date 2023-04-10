@@ -1,3 +1,10 @@
+"""
+Create a ticket
+This script receives a webhook data from a chat application, 
+extracts the conversation between a support agent and a customer, and 
+creates a ticket in Freshdesk with the conversation as a description.
+""" 
+
 import requests
 import os
 from dotenv import load_dotenv
@@ -12,33 +19,41 @@ FRESHDESK_API_URL = os.getenv("FRESHDESK_API_URL")
 
 
 def send_private_note(conversation_id, content):
+    """
+    Sends a private note to the chat application.
+    """
     data = {
         "content": content,
         "message_type": "outgoing",
         "private": True
     }
 
-    response = requests.post(
-        CHAT_API_URL.format(conversation_id),
-        json=data,
-        headers={'api_access_token': CHAT_API_ACCESS_TOKEN}
-    )
+    response = requests.get(f"{CHAT_API_URL}/conversations/{conversation_id}/messages",
+        headers={'api_access_token': CHAT_API_ACCESS_TOKEN})
+
 
 def handle_create_ticket(request):
+    """
+    Receives a webhook data, extracts the conversation messages and metadata,
+    creates an HTML conversation, extracts the customer name and email,
+    creates a Freshdesk ticket with the conversation as a description,
+    and adds a private note to the ticket with the conversation URL.
+    Returns a JSON response with a success or failed status.
+    """
     webhook_data = request.json
 
     # Extract the ID from the webhook data
     conversation_id = webhook_data['id']
 
     # Make a GET request to the specified endpoint
-    response = requests.get(CHAT_API_URL.format(conversation_id),
-                            headers={'api_access_token': CHAT_API_ACCESS_TOKEN})
+    response = requests.get(f"{CHAT_API_URL}/conversations/{conversation_id}/messages",
+                        headers={'api_access_token': CHAT_API_ACCESS_TOKEN})
 
     # Extract the messages and metadata from the response
     payload = response.json()
     messages = payload['payload']
     metadata = payload['meta']
-
+    
     conversation = []
 
     for message in messages:

@@ -1,3 +1,7 @@
+"""
+General Purpose: This script retrieves the tickets from Freshdesk API based on a given email address, 
+filters them by status, creates a message with the ticket details, and sends it as a private note to a chat application. 
+"""
 import requests
 import os
 from datetime import datetime
@@ -12,6 +16,9 @@ CHAT_API_ACCESS_TOKEN = os.getenv("CHAT_API_ACCESS_TOKEN")
 CHAT_API_URL = os.getenv("CHAT_API_URL")
 
 def get_ticket_status_name(status_code):
+    """
+    Returns the name of a Freshdesk ticket status code.
+    """
     status_names = {
         2: "Open",
         3: "Pending",
@@ -21,6 +28,9 @@ def get_ticket_status_name(status_code):
     return status_names.get(status_code, "Unknown")
 
 def send_private_note(conversation_id, content):
+    """
+    Sends a private note to the chat application.
+    """
     data = {
         "content": content,
         "message_type": "outgoing",
@@ -28,19 +38,34 @@ def send_private_note(conversation_id, content):
         "content_type": "text"  # Change this line to "markdown"
     }
 
+    url = f"{CHAT_API_URL}/conversations/{conversation_id}/messages"
+    
     response = requests.post(
-        CHAT_API_URL.format(conversation_id),
+        url,
         json=data,
         headers={'api_access_token': CHAT_API_ACCESS_TOKEN}
     )
 
+    if response.status_code == 200:
+        print("Private note sent successfully.")
+    else:
+        print("Failed to send private note. Status code:", response.status_code)
+        print("Error message:", response.text)
 
 def get_tickets_by_email(email):
+    """
+    Retrieves the Freshdesk tickets for a given email address.
+    """
     tickets_url = f"{FRESHDESK_API_URL}/tickets?email={email}"
     response = requests.get(tickets_url, auth=(FRESHDESK_API_KEY, "X"))
     return response
 
 def handle_ticket_info(request):
+    """
+    Receives a webhook data, extracts the email and conversation ID,
+    retrieves the Freshdesk tickets for the email, filters them by status,
+    creates a message with the ticket details, and sends it as a private note to the chat application.
+    """
     webhook_data = request.get_json()
     
     # Extract the email and conversation ID from the webhook data

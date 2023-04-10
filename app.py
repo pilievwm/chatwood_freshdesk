@@ -3,8 +3,16 @@ import os
 from ct import handle_create_ticket
 from conv import handle_ticket_info
 from login_user import handle_login_user
+from team import get_team_structure, handle_team_availability
 
 app = Flask(__name__)
+
+team_structure = get_team_structure()
+
+@app.route('/team', methods=['GET'])
+def team():
+    return handle_team_availability(request, team_structure)
+
 
 @app.route('/ct', methods=['POST'])
 def create_ticket():
