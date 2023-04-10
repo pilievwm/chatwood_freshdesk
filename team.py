@@ -26,22 +26,21 @@ def get_team_structure():
     return team_structure
 
 def get_availability(email, chat_api_access_token, chat_api_url):
-    headers={'api_access_token': CHAT_API_ACCESS_TOKEN}
+    headers = {'api_access_token': CHAT_API_ACCESS_TOKEN}
 
     agents_url = f'{chat_api_url}/agents'
     response = requests.get(agents_url, headers=headers)
 
     if response.status_code != 200:
-        return f"Error: {response.status_code} - {response.text}"
+        return f"Error: {response.status_code} - {response.text}", None
 
     agents = response.json()
 
     for agent in agents:
         if agent['email'] == email:
-            return agent['availability_status']
+            return agent.get('availability_status'), agent.get('available_name', 'N/A')
 
-    return None
-
+    return None, None
 
 
 def handle_team_availability(request, team_structure):
@@ -51,14 +50,14 @@ def handle_team_availability(request, team_structure):
     if email in team_structure:
         if route and route in team_structure[email]:
             target_email = team_structure[email][route]
-            availability = get_availability(target_email, CHAT_API_ACCESS_TOKEN, CHAT_API_URL)
-            return jsonify({route: target_email, "availability": availability})
+            availability, available_name = get_availability(target_email, CHAT_API_ACCESS_TOKEN, CHAT_API_URL)
+            return jsonify({route: target_email, "status": availability, "name": available_name})
         else:
             response = {}
             for key in team_structure[email]:
                 target_email = team_structure[email][key]
-                availability = get_availability(target_email, CHAT_API_ACCESS_TOKEN, CHAT_API_URL)
-                response[key] = {"email": target_email, "availability": availability}
+                availability, available_name = get_availability(target_email, CHAT_API_ACCESS_TOKEN, CHAT_API_URL)
+                response[key] = {"email": target_email, "status": availability, "name": available_name}
             return jsonify(response)
     else:
         return jsonify({'error': 'Email not found'}), 404
