@@ -32,15 +32,19 @@ def get_availability(email, chat_api_access_token, chat_api_url):
     response = requests.get(agents_url, headers=headers)
 
     if response.status_code != 200:
-        return f"Error: {response.status_code} - {response.text}", None
+        return f"Error: {response.status_code} - {response.text}", None, None
 
     agents = response.json()
 
     for agent in agents:
         if agent['email'] == email:
-            return agent.get('availability_status'), agent.get('available_name', 'N/A')
+            return (
+                agent.get('availability_status'),
+                agent.get('available_name', 'N/A'),
+                agent.get('id'),
+            )
 
-    return None, None
+    return None, None, None
 
 
 def handle_team_availability(request, team_structure):
@@ -50,14 +54,25 @@ def handle_team_availability(request, team_structure):
     if email in team_structure:
         if route and route in team_structure[email]:
             target_email = team_structure[email][route]
-            availability, available_name = get_availability(target_email, CHAT_API_ACCESS_TOKEN, CHAT_API_URL)
-            return jsonify({route: target_email, "status": availability, "name": available_name})
+            availability, available_name, agent_id = get_availability(target_email, CHAT_API_ACCESS_TOKEN, CHAT_API_URL)
+            return jsonify({
+                route: target_email,
+                "status": availability,
+                "name": available_name,
+                "id": agent_id,
+            })
         else:
             response = {}
             for key in team_structure[email]:
                 target_email = team_structure[email][key]
-                availability, available_name = get_availability(target_email, CHAT_API_ACCESS_TOKEN, CHAT_API_URL)
-                response[key] = {"email": target_email, "status": availability, "name": available_name}
+                availability, available_name, agent_id = get_availability(target_email, CHAT_API_ACCESS_TOKEN, CHAT_API_URL)
+                response[key] = {
+                    "email": target_email,
+                    "status": availability,
+                    "name": available_name,
+                    "id": agent_id,
+                }
             return jsonify(response)
     else:
         return jsonify({'error': 'Email not found'}), 404
+
