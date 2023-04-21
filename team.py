@@ -19,9 +19,9 @@ def get_team_structure():
     csv_reader = csv.reader(StringIO(data))
     for row in csv_reader:
         am, jam, ta = [email.strip() for email in row]  # Strip extra spaces
-        team_structure[am] = {'jam': jam, 'ta': ta}
-        team_structure[jam] = {'am': am, 'ta': ta}
-        team_structure[ta] = {'am': am, 'jam': jam}
+        team_structure[am] = {'am': am, 'jam': jam, 'ta': ta}
+        team_structure[jam] = {'am': am, 'jam': jam, 'ta': ta}
+        team_structure[ta] = {'am': am, 'jam': jam, 'ta': ta}
 
     return team_structure
 
@@ -46,10 +46,13 @@ def get_availability(email, chat_api_access_token, chat_api_url):
 
     return None, None, None
 
-
-def handle_team_availability(request, team_structure):
-    email = request.args.get('email')
-    route = request.args.get('route')
+def handle_team_availability(request=None, email=None, route=None, team_structure=None):
+    if request:
+        email = request.args.get('email')
+        route = request.args.get('route')
+    
+    if not team_structure:
+        team_structure = get_team_structure()
 
     if email in team_structure:
         if route and route in team_structure[email]:
@@ -75,4 +78,3 @@ def handle_team_availability(request, team_structure):
             return jsonify(response)
     else:
         return jsonify({'error': 'Email not found'}), 404
-
