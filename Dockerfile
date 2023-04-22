@@ -19,8 +19,11 @@ COPY .env ./
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
 
+VOLUME /app/cert
+
 # Define environment variable
 ENV FLASK_APP=app.py
 
 # Run the command to start the Flask application
-CMD ["flask", "run", "--host=0.0.0.0"]
+#CMD ["flask", "run", "--host=0.0.0.0"]
+CMD ["python", "app.py"]

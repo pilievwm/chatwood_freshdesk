@@ -3,7 +3,12 @@ version: "3.9"
 services:
   webhook_receiver:
     build: .
+    restart: always
     ports:
       - "5000:5000"
+    environment:
+      FLASK_ENV: development
+    env_file:
+      - .env
     volumes:
-      - /etc/letsencrypt/live/chat.cloudcart.com:/etc/letsencrypt/live/chat.cloudcart.com
+      - /etc/letsencrypt/live/chat.cloudcart.com:/app/cert
