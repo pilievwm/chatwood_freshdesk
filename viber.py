@@ -292,7 +292,7 @@ def process_viber_request(request):
         contact = response_data['payload'][0]
         contact_name = contact['name']
         pricing_plan = contact['custom_attributes'].get('pricingPlan')
-        if pricing_plan not in ['cc-employees1', 'enterprise1', 'business1']:
+        if pricing_plan not in ['cc-employees1', 'enterprise', 'business']:
             message_text = f"{contact_name}, за съжаление Вашият абонаментен план *{pricing_plan}* не включва чат поддръжка. \n\nТук можете да се запознаете с цените на нашите абонаментни планове:"
             status_code, response_text = send_viber_message(user_id, message_text)
 
