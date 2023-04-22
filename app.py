@@ -7,9 +7,6 @@ from login_user import handle_login_user
 from team import get_team_structure, handle_team_availability
 from viber import process_viber_request, send_viber_message
 
-SSL_CERTIFICATE = os.getenv("SSL_CERTIFICATE")
-SSL_CERTIFICATE_KEY = os.getenv("SSL_CERTIFICATE_KEY")
-
 
 app = Flask(__name__)
 
@@ -102,4 +99,4 @@ def orders():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port, ssl_context=('/app/cert/fullchain.pem', '/app/cert/privkey.pem'))
+    app.run(debug=True, host='0.0.0.0', port=port, ssl_context=('/app/fullchain.pem', '/app/privkey.pem'))

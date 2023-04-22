@@ -330,6 +330,7 @@ def process_viber_request(request):
 
 
     owner_ta_id = None
+    owner_id = None
     action_body = data['message']['text']
 
     if contact is not None:
@@ -338,20 +339,32 @@ def process_viber_request(request):
 
         owner_id, owner_name, owner_status, owner_ta_name, owner_ta_id, owner_ta_status = get_owner_by_email(owner_email)
 
-        if action_body.startswith("Искам да се свържа с моя акаунт мениджър"):
+        if action_body == "Искам да се свържа с моя акаунт мениджър":
             if owner_id is not None:
-                assign_to_owner = True
                 if owner_status == "online":
                     status_code, response_text = send_viber_message(user_id, f"Разговорът е насочен към Вашия акаунт мениджър {owner_name}. \n\nМоля, опишете подробно въпроса, който имате.")
                 else:
                     status_code, response_text = send_viber_message(user_id, f"Вашият акаунт мениджър {owner_name} в момента не е на линия. Ще се свърже с вас при първа възможност. \n\nМоля, опишете подробно въпроса, който имате.")
             else:
                 print(f"Failed to find user with email {owner_email}.")
+
+            if action_body == "Искам да се свържа с моя акаунт мениджър":
+                print("Reassigning to sales owner")
+                assignee_id = owner_id
+            elif action_body == "Искам да се свържа с техническия екип":
+                print("Assigning to technical assistant")
+                assignee_id = owner_ta_id
+            else:
+                print("No assignment")
+                assignee_id = None
+
+            if assignee_id is not None:
+                print(f"Assigning conversation {latest_conversation['id']} to {assignee_id}")
+                assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
+                
         elif action_body == "Искам да се свържа с техническия екип":
             # Handle the action for connecting with the technical team here
             if owner_ta_id is not None:
-                assign_to_owner = False
-
                 if owner_status == "online":
                     status_code, response_text = send_viber_message(user_id, f"Свързвам ви с технически асистент {owner_ta_name}. \n\nМоля, опишете подробно въпроса, който имате.")
                 else:
@@ -360,15 +373,21 @@ def process_viber_request(request):
                 print(f"Failed to find user with email {owner_email}.")
 
             # Assign the conversation to the owner or the technical assistant
-            if latest_conversation and (owner_id is not None or owner_ta_id is not None):
-                if action_body.startswith("Искам да се свържа с моя акаунт мениджър"):
-                    assignee_id = owner_id
-                elif action_body == "Искам да се свържа с техническия екип":
-                    assignee_id = owner_ta_id
-                else:
-                    assignee_id = None
+            
+            if action_body == "Искам да се свържа с моя акаунт мениджър":
+                print("Reassigning to sales owner")
+                assignee_id = owner_id
+            elif action_body == "Искам да се свържа с техническия екип":
+                print("Assigning to technical assistant")
+                assignee_id = owner_ta_id
+            else:
+                print("No assignment")
+                assignee_id = None
 
-                if assignee_id is not None:
-                    assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
+            if assignee_id is not None:
+                print(f"Assigning conversation {latest_conversation['id']} to {assignee_id}")
+                assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
+
+            
 
     return jsonify({'status': 'success'})
