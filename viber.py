@@ -130,7 +130,7 @@ def send_viber_message(user_id, message_text):
     return response.status_code, response.text
 
 def send_personalized_viber_message(user_id, contact_name):
-    message_text = f"{contact_name} Моля, изберете една от следните опции, за да можем да Ви съдействаме:"
+    message_text = f"{contact_name}, моля, изберете една от следните опции, за да можем да Ви съдействаме:"
     send_message_payload = {
         "receiver": user_id,
         "min_api_version": 7,
@@ -267,6 +267,7 @@ def process_viber_request(request):
     response_data = request_contact_search(user_id, CHAT_API_ACCESS_TOKEN)
     email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     contact = None
+    latest_conversation = None
 
     if response_data['meta']['count'] == 0:
         if re.fullmatch(email_regex, message_text):
@@ -275,8 +276,9 @@ def process_viber_request(request):
             if email_contact_search_data['meta']['count'] > 0:
                 contact = email_contact_search_data['payload'][0]
                 contact_id = contact['id']
+                contact_name = contact['name']
 
-                send_personalized_viber_message(user_id)
+                send_personalized_viber_message(user_id, contact_name)
                 update_contact_viber_id(contact_id, user_id, True, CHAT_API_ACCESS_TOKEN)
             else:
                 message_text = f"Не е открит потребител с този имейл: {message_text}. Моля, опитайте отново."
@@ -292,7 +294,7 @@ def process_viber_request(request):
         contact = response_data['payload'][0]
         contact_name = contact['name']
         pricing_plan = contact['custom_attributes'].get('pricingPlan')
-        if pricing_plan not in ['cc-employees1', 'enterprise', 'business']:
+        if pricing_plan not in ['cc-employees', 'enterprise', 'business']:
             message_text = f"{contact_name}, за съжаление Вашият абонаментен план *{pricing_plan}* не включва чат поддръжка. \n\nТук можете да се запознаете с цените на нашите абонаментни планове:"
             status_code, response_text = send_viber_message(user_id, message_text)
 
@@ -328,7 +330,7 @@ def process_viber_request(request):
 
                 # If the conversation is not open, send the personalized Viber message
                 if conversation_status != "open":
-                    send_personalized_viber_message(user_id)
+                    send_personalized_viber_message(user_id, contact_name)
 
                 # Create a message in the conversation
                 message_create_url = f"{CHAT_API_URL}/conversations/{latest_conversation['id']}/messages"
@@ -365,19 +367,19 @@ def process_viber_request(request):
                     status_code, response_text = send_viber_message(user_id, f"Вашият акаунт мениджър {owner_name} в момента не е на линия. Ще се свърже с вас при първа възможност. \n\nМоля, опишете подробно въпроса, който имате.")
             else:
                 print(f"Failed to find user with email {owner_email}.")
+            if latest_conversation and (owner_id is not None or owner_ta_id is not None):
+                if action_body == "Искам да се свържа с моя акаунт мениджър":
+                    assignee_id = owner_id
+                elif action_body == "Искам да се свържа с техническия екип":
+                    print("Assigning to technical assistant")
+                    assignee_id = owner_ta_id
+                else:
+                    print("No assignment")
+                    assignee_id = None
 
-            if action_body == "Искам да се свържа с моя акаунт мениджър":
-                assignee_id = owner_id
-            elif action_body == "Искам да се свържа с техническия екип":
-                print("Assigning to technical assistant")
-                assignee_id = owner_ta_id
-            else:
-                print("No assignment")
-                assignee_id = None
-
-            if assignee_id is not None:
-                print(f"Assigning conversation {latest_conversation['id']} to {assignee_id}")
-                assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
+                if assignee_id is not None:
+                    print(f"Assigning conversation {latest_conversation['id']} to {assignee_id}")
+                    assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
 
         elif action_body == "Искам да се свържа с техническия екип":
             # Handle the action for connecting with the technical team here
@@ -390,20 +392,20 @@ def process_viber_request(request):
                 print(f"Failed to find user with email {owner_email}.")
 
             # Assign the conversation to the owner or the technical assistant
-            
-            if action_body == "Искам да се свържа с моя акаунт мениджър":
-                print("Reassigning to sales owner")
-                assignee_id = owner_id
-            elif action_body == "Искам да се свържа с техническия екип":
-                print("Assigning to technical assistant")
-                assignee_id = owner_ta_id
-            else:
-                print("No assignment")
-                assignee_id = None
+            if latest_conversation and (owner_id is not None or owner_ta_id is not None):
+                if action_body == "Искам да се свържа с моя акаунт мениджър":
+                    print("Reassigning to sales owner")
+                    assignee_id = owner_id
+                elif action_body == "Искам да се свържа с техническия екип":
+                    print("Assigning to technical assistant")
+                    assignee_id = owner_ta_id
+                else:
+                    print("No assignment")
+                    assignee_id = None
 
-            if assignee_id is not None:
-                print(f"Assigning conversation {latest_conversation['id']} to {assignee_id}")
-                assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
+                if assignee_id is not None:
+                    print(f"Assigning conversation {latest_conversation['id']} to {assignee_id}")
+                    assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
 
             
 
