@@ -5,7 +5,6 @@ import requests
 from flask import jsonify
 from team import handle_team_availability, get_team_structure, get_availability
 
-
 # Constants
 CHAT_API_ACCESS_TOKEN = os.environ['CHAT_API_ACCESS_TOKEN']
 VIBER_API_URL = os.environ['VIBER_API_URL']
@@ -116,18 +115,28 @@ def send_viber_url_message(user_id, message_url):
     response = requests.post(send_message_url, json=send_message_payload, headers=headers)
     return response.status_code, response.text
 
-def send_viber_message(user_id, message_text):
+def send_viber_message(user_id, message_text, sender_name=None, sender_avatar=None):
     send_message_url = f"{VIBER_API_URL}/send_message"
     send_message_payload = {
         "receiver": user_id,
         "type": "text",
         "min_api_version": 7,
-        "text": message_text
+        "text": message_text,
     }
+
+    if sender_name:
+        send_message_payload["sender"] = {
+            "name": sender_name,
+        }
+
+        if sender_avatar:
+            send_message_payload["sender"]["avatar"] = sender_avatar
+
     headers = get_headers(viber_auth_token=X_VIBER_AUTH_TOKEN)
 
     response = requests.post(send_message_url, json=send_message_payload, headers=headers)
     return response.status_code, response.text
+
 
 def send_personalized_viber_message(user_id, contact_name):
     message_text = f"{contact_name}, моля, изберете една от следните опции, за да можем да Ви съдействаме:"
@@ -262,7 +271,18 @@ def process_viber_request(request):
         return '', 400
 
     user_id = data[user_key]['id']
-    message_text = data['message']['text'] if event == "message" else None
+    if event == "message":
+        message_type = data['message'].get('type', 'text')
+        if message_type == 'text':
+            message_text = data['message']['text']
+        elif message_type == 'picture' or message_type == 'video':
+            message_media_url = data['message']['media']
+        else:
+            message_text = None
+            message_media_url = None
+    else:
+        message_text = None
+        message_media_url = None
 
     response_data = request_contact_search(user_id, CHAT_API_ACCESS_TOKEN)
     email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
@@ -277,7 +297,6 @@ def process_viber_request(request):
                 contact = email_contact_search_data['payload'][0]
                 contact_id = contact['id']
                 contact_name = contact['name']
-
                 send_personalized_viber_message(user_id, contact_name)
                 update_contact_viber_id(contact_id, user_id, True, CHAT_API_ACCESS_TOKEN)
             else:
@@ -356,7 +375,6 @@ def process_viber_request(request):
     if contact is not None:
         owner_email = contact['custom_attributes']['owner_email']
         pricing_plan = contact['custom_attributes'].get('pricingPlan')
-
         owner_id, owner_name, owner_status, owner_ta_name, owner_ta_id, owner_ta_status = get_owner_by_email(owner_email)
 
         if action_body == "Искам да се свържа с моя акаунт мениджър":

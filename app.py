@@ -55,9 +55,12 @@ def chatwoot():
         viberid = payload['conversation']['meta']['sender']['custom_attributes']['viberid']
         conversation_id = payload['conversation']['id']
         message_text = message['content']
+        sender = message.get('sender', {})
+        sender_name = sender.get('available_name') or sender.get('name')
+        sender_avatar = sender.get('avatar_url')
 
         # Call the send_viber_message function from viber.py to send the message
-        send_viber_message(user_id=viberid, message_text=message_text)
+        send_viber_message(user_id=viberid, message_text=message_text, sender_name=sender_name, sender_avatar=sender_avatar)
 
     return jsonify({"status": "success"})
 
@@ -99,4 +102,4 @@ def orders():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port, ssl_context=('/app/fullchain.pem', '/app/privkey.pem'))
+    app.run(debug=True, host='0.0.0.0', port=port, ssl_context=('fullchain.pem', 'privkey.pem'))
