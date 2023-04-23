@@ -1,4 +1,4 @@
-from viber import send_viber_message
+from viber_msg import send_viber_message
 
 def handle_chatwoot_message(viberid, conversation_id, message_text, sender_name, sender_avatar):
     # Send the message to the Viber user using the send_viber_message function
