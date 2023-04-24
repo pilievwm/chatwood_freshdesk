@@ -154,3 +154,40 @@ def handle_viber_message_response(user_id, action_body):
         return "technical_assistant"
     else:
         return None
+
+def handle_ai_help_request(user_id):
+    send_message_url = f"{VIBER_API_URL}/send_message"
+    send_message_payload = {
+        "receiver": user_id,
+        "type": "text",
+        "min_api_version": 7,
+        "text": "AI SUPPORT HERE",
+        "keyboard": {
+            "Type": "keyboard",
+            "DefaultHeight": False,
+            "Buttons": [
+                {
+                    "ActionType": "reply",
+                    "ActionBody": f"Искам да се свържа с моя акаунт мениджър",
+                    "Text": f"Искам да се свържа с моя акаунт мениджър",
+                    "TextSize": "regular",
+                    "Columns": 3, # Change this value as needed
+                    "Rows": 1,
+                    "BgColor": "#d3b8ff" # Blue color
+                },
+                {
+                    "ActionType": "reply",
+                    "ActionBody": "Искам да се свържа с техническия екип",
+                    "Text": "Искам да се свържа с техническия екип",
+                    "TextSize": "regular",
+                    "Columns": 3, # Change this value as needed
+                    "Rows": 1,
+                    "BgColor": "#ffd6b8" # Yellow color
+                }
+            ]
+        }
+    }
+    headers = get_headers(viber_auth_token=X_VIBER_AUTH_TOKEN)
+
+    response = requests.post(send_message_url, json=send_message_payload, headers=headers)
+    return response.status_code, response.text

@@ -8,6 +8,7 @@ VIBER_API_URL = os.environ['VIBER_API_URL']
 X_VIBER_AUTH_TOKEN = os.environ['X_VIBER_AUTH_TOKEN']
 CHAT_API_URL = os.environ['CHAT_API_URL']
 
+
 def get_headers(api_access_token=None, viber_auth_token=None):
     headers = {"Content-Type": "application/json"}
     
