@@ -6,6 +6,7 @@ from conv import handle_ticket_info
 from login_user import handle_login_user
 from chatHelpers import get_team_structure, handle_team_availability
 from main import process_viber_request, send_viber_message
+from chatwoot import process_chatwoot_payload
 
 
 app = Flask(__name__)
@@ -41,28 +42,11 @@ def viber():
 def chatwoot():
     # Get the JSON payload from the request
     payload = request.json
-    messages = payload.get('conversation', {}).get('messages', [])
-    if not messages:
 
-        return jsonify({"status": "success"})
-    message = messages[0]
-    # Check if the message is outgoing and private and has an open status
-    if (message.get('message_type') != 0 and
-        not message.get('private') and
-        'cw-origin' not in message.get('external_source_ids', {}).get('slack', '')):
+    # Process the payload using the process_chatwoot_payload function from chatwoot.py
+    response = process_chatwoot_payload(payload)
 
-        # Extract the required variables from the response
-        viberid = payload['conversation']['meta']['sender']['custom_attributes']['viberid']
-        conversation_id = payload['conversation']['id']
-        message_text = message['content']
-        sender = message.get('sender', {})
-        sender_name = sender.get('available_name') or sender.get('name')
-        sender_avatar = sender.get('avatar_url')
-
-        # Call the send_viber_message function from viber.py to send the message
-        send_viber_message(user_id=viberid, message_text=message_text, sender_name=sender_name, sender_avatar=sender_avatar)
-
-    return jsonify({"status": "success"})
+    return response
 
 
 def generate_filename(base_name, ext):

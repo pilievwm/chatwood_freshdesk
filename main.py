@@ -17,7 +17,6 @@ CHAT_API_URL = os.environ['CHAT_API_URL']
 def process_viber_request(request):
     data = request.json
     event = data.get("event")
-    
 
     if event == "webhook":
         return '', 200
@@ -32,8 +31,10 @@ def process_viber_request(request):
     if user_key not in data:
         print(f"No {user_key} information in the received data.")
         return '', 400
+            
 
     user_id = data[user_key]['id']
+    
     if event == "message":
         message_type = data['message'].get('type', 'text')
         if message_type == 'text':
@@ -60,8 +61,22 @@ def process_viber_request(request):
                 contact = email_contact_search_data['payload'][0]
                 contact_id = contact['id']
                 contact_name = contact['name']
-                send_personalized_viber_message(user_id, contact_name)
-                update_contact_viber_id(contact_id, user_id, True, CHAT_API_ACCESS_TOKEN)
+                pricing_plan = contact['custom_attributes'].get('pricingPlan')
+
+                # Todo: Add external source for controlling the accepted plans
+                if pricing_plan not in ['cc-employees', 'enterprise', 'business']:
+                    message_text = f"{contact_name}, за съжаление Вашият абонаментен план *{pricing_plan}* не включва чат поддръжка. \n\nТук можете да се запознаете с цените на нашите абонаментни планове:"
+                    status_code, response_text = send_viber_message(user_id, message_text)
+
+                    # Add a delay between messages
+                    time.sleep(2)
+
+                    message_url = "https://cloudcart.com/bg/pricing?utm_source=viberBot"
+                    status_code, response_text = send_viber_url_message(user_id, message_url)
+
+                else:
+                    send_personalized_viber_message(user_id, contact_name)
+                    update_contact_viber_id(contact_id, user_id, True, CHAT_API_ACCESS_TOKEN)
             else:
                 message_text = f"Не е открит потребител с този имейл: {message_text}. Моля, опитайте отново."
                 status_code, response_text = send_viber_message(user_id, message_text)
@@ -76,6 +91,7 @@ def process_viber_request(request):
         contact = response_data['payload'][0]
         contact_name = contact['name']
         pricing_plan = contact['custom_attributes'].get('pricingPlan')
+        # Todo: Add external source for controlling the accepted plans
         if pricing_plan not in ['cc-employees', 'enterprise', 'business']:
             message_text = f"{contact_name}, за съжаление Вашият абонаментен план *{pricing_plan}* не включва чат поддръжка. \n\nТук можете да се запознаете с цените на нашите абонаментни планове:"
             status_code, response_text = send_viber_message(user_id, message_text)
@@ -107,13 +123,6 @@ def process_viber_request(request):
                 latest_conversation = create_conversation(contact_id, inbox_id, CHAT_API_ACCESS_TOKEN)
 
             if latest_conversation is not None:
-                # Get the status of the conversation
-                conversation_status = latest_conversation['status']
-
-                # If the conversation is not open, send the personalized Viber message
-                if conversation_status != "open":
-                    send_personalized_viber_message(user_id, contact_name)
-
                 # Create a message in the conversation
                 message_create_url = f"{CHAT_API_URL}/conversations/{latest_conversation['id']}/messages"
                 message_create_payload = {
@@ -121,14 +130,12 @@ def process_viber_request(request):
                     "message_type": "incoming",
                     "private": False
                 }
-
                 headers = {
                     "Content-Type": "application/json",
                     "api_access_token": CHAT_API_ACCESS_TOKEN
                 }
-
                 requests.post(message_create_url, json=message_create_payload, headers=headers)
-                
+
 
     owner_ta_id = None
     owner_id = None
@@ -138,13 +145,12 @@ def process_viber_request(request):
         owner_email = contact['custom_attributes']['owner_email']
         pricing_plan = contact['custom_attributes'].get('pricingPlan')
         owner_id, owner_name, owner_status, owner_ta_name, owner_ta_id, owner_ta_status = get_owner_by_email(owner_email)
-
         if action_body == "Искам да се свържа с моя акаунт мениджър":
             if owner_id is not None:
                 if owner_status == "online":
-                    status_code, response_text = send_viber_message(user_id, f"Разговорът е насочен към Вашия акаунт мениджър {owner_name}. \n\nМоля, опишете подробно въпроса, който имате.")
+                    status_code, response_text = send_viber_message(user_id, f"Разговорът е насочен към Вашия акаунт мениджър {owner_name}. \n\nМоля, изчакайте")
                 else:
-                    status_code, response_text = send_viber_message(user_id, f"Вашият акаунт мениджър {owner_name} в момента не е на линия. Ще се свърже с вас при първа възможност. \n\nМоля, опишете подробно въпроса, който имате.")
+                    status_code, response_text = send_viber_message(user_id, f"Препратихме съобщението Ви към Вашият акаунт мениджър. \n{owner_name} в момента не е на линия. \n\nЩе се свърже с вас при първа възможност.")
             else:
                 print(f"Failed to find user with email {owner_email}.")
             if latest_conversation and (owner_id is not None or owner_ta_id is not None):
@@ -165,9 +171,9 @@ def process_viber_request(request):
             # Handle the action for connecting with the technical team here
             if owner_ta_id is not None:
                 if owner_status == "online":
-                    status_code, response_text = send_viber_message(user_id, f"Свързвам ви с технически асистент {owner_ta_name}. \n\nМоля, опишете подробно въпроса, който имате.")
+                    status_code, response_text = send_viber_message(user_id, f"Свързвам ви с технически асистент {owner_ta_name}. \n\nМоля, изчакайте.")
                 else:
-                    status_code, response_text = send_viber_message(user_id, f"Вашият технически асистент {owner_ta_name} в момента не е на линия. \n\nМоля, опишете подробно въпроса, който имате.")
+                    status_code, response_text = send_viber_message(user_id, f"Препратихме съобщението Ви към технически асистент. \n{owner_ta_name} в момента не е на линия. \n\nЩе се свърже с вас при първа възможност.")
             else:
                 print(f"Failed to find user with email {owner_email}.")
 
