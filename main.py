@@ -115,7 +115,7 @@ def process_viber_request(request):
 
                 if pricing_plan not in ACCEPTED_PLANS:
                     update_contact_viber_id(contact_id, user_id, True, CHAT_API_ACCESS_TOKEN)
-                    gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result=None, message_text=f"Здравейте, какзвам се {contact_name}")
+                    gpt_response = generate_response_for_bad_pricing_plans(user_id, contact_name, search_result=None, message_text=f"Здравейте, какзвам се {contact_name}")
                     send_viber_message(user_id, gpt_response,sender_name="AI", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
 
                 else:
