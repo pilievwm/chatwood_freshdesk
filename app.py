@@ -36,7 +36,7 @@ def ping():
 
 @app.route('/viber', methods=['POST'])
 def viber():
-    return process_viber_request(request), 200
+    return process_viber_request(request)
 
 @app.route('/chatwoot', methods=['POST'])
 def chatwoot():
