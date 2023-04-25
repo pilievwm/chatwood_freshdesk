@@ -5,6 +5,10 @@ import requests
 from flask import jsonify
 from chatHelpers import *
 from viber_msg import *
+from gpt import *
+from searchBot import *
+
+
 
 
 # Constants
@@ -13,8 +17,10 @@ VIBER_API_URL = os.environ['VIBER_API_URL']
 X_VIBER_AUTH_TOKEN = os.environ['X_VIBER_AUTH_TOKEN']
 CHAT_API_URL = os.environ['CHAT_API_URL']
 
-ACCEPTED_PLANS = ['cc-employees', 'enterprise', 'business']
+ACCEPTED_PLANS = ['cc-employees1', 'enterprise', 'business']
 MESSAGE_DELAY = 2
+TIME_THRESHOLD = 3000
+MAX_SEARCH_RESULTS = 1
 
 def send_pricing_plan_message(user_id, contact_name, pricing_plan, delay=None):
     message_text = f"{contact_name}, за съжаление Вашият абонаментен план *{pricing_plan}* не включва чат поддръжка. \n\nТук можете да се запознаете с цените на нашите абонаментни планове:"
@@ -68,7 +74,13 @@ def process_viber_request(request):
     if user_key not in data:
         print(f"No {user_key} information in the received data.")
         return '', 400
-            
+
+    current_time = int(time.time()*1000)
+    message_timestamp = data['timestamp']
+
+    if current_time - message_timestamp > TIME_THRESHOLD:
+        print(f"Ignoring old message with timestamp {message_timestamp}")
+        return jsonify({'status': 'ignored'})    
 
     user_id = data[user_key]['id']
     
@@ -76,6 +88,7 @@ def process_viber_request(request):
         message_type = data['message'].get('type', 'text')
         if message_type == 'text':
             message_text = data['message']['text']
+
         elif message_type == 'picture' or message_type == 'video':
             message_media_url = data['message']['media']
         else:
@@ -101,7 +114,10 @@ def process_viber_request(request):
                 pricing_plan = contact['custom_attributes'].get('pricingPlan')
 
                 if pricing_plan not in ACCEPTED_PLANS:
-                    send_pricing_plan_message(user_id, contact_name, pricing_plan, 2)
+                    update_contact_viber_id(contact_id, user_id, True, CHAT_API_ACCESS_TOKEN)
+                    gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result=None, message_text=f"Здравейте, какзвам се {contact_name}")
+                    send_viber_message(user_id, gpt_response,sender_name="AI", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+
                 else:
                     send_personalized_viber_message(user_id, contact_name)
                     update_contact_viber_id(contact_id, user_id, True, CHAT_API_ACCESS_TOKEN)
@@ -114,9 +130,28 @@ def process_viber_request(request):
         contact = response_data['payload'][0]
         contact_name = contact['name']
         pricing_plan = contact['custom_attributes'].get('pricingPlan')
+        
         # Todo: Add external source for controlling the accepted plans
         if pricing_plan not in ACCEPTED_PLANS:
-            send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
+            # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
+            search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
+            print(f"\n\nНамерен резултат: {search_result}\n\n")
+            gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
+
+            # Analyze the response
+            analyzer_response = analyze_response(gpt_response)
+
+            # Process the analyzer's response
+            conversation_ended = process_analyzer_response(analyzer_response, user_id)
+
+            # If the conversation has ended, call finalize_ai_conversation_viber_message
+            if conversation_ended:
+                finalize_ai_conversation_viber_message(user_id, gpt_response, sender_name="AI", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+            else:
+                send_viber_message(user_id, gpt_response, sender_name="AI", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+
+
+
 
         else:
             contact_id = contact['id']
@@ -182,6 +217,13 @@ def process_viber_request(request):
             if assignee_id is not None:
                 print(f"Assigning conversation {latest_conversation['id']} to {assignee_id}")
                 assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
+    
+    ### If user without plan decide to start a new AI session ###
+    if action_body == "имам въпрос на различна тема":
+        # Call the function to wipe user_chat_histories
+        wipe_user_chat_history(user_id)
 
+        # Send a Viber message asking the user to ask a new question
+        gpt_response = generate_response_for_bad_pricing_plans(user_id, contact_name, search_result="", message_text=message_text)
 
     return jsonify({'status': 'success'})

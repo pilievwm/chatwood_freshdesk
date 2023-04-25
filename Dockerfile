@@ -20,6 +20,7 @@ COPY .env ./
 EXPOSE 5000
 
 VOLUME /app/cert
+VOLUME /app/data
 
 # Define environment variable
 ENV FLASK_APP=app.py

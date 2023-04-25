@@ -12,3 +12,4 @@ services:
       - .env
     volumes:
       - /etc/letsencrypt/live/chat.cloudcart.com:/app/cert
+      - ./data:/app/data
