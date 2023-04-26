@@ -5,8 +5,10 @@ from ct import handle_create_ticket
 from conv import handle_ticket_info
 from login_user import handle_login_user
 from chatHelpers import get_team_structure, handle_team_availability
-from main import process_viber_request, send_viber_message
+from main import process_viber_request
 from chatwoot import process_chatwoot_payload
+import threading
+import socket
 
 
 app = Flask(__name__)
@@ -36,7 +38,16 @@ def ping():
 
 @app.route('/viber', methods=['POST'])
 def viber():
-    return process_viber_request(request)
+    # Get a copy of the request's JSON data
+    request_data = request.get_json()
+
+    # Create a new thread for process_viber_request and start it
+    thread = threading.Thread(target=process_viber_request, args=(request_data,))
+    thread.start()
+
+    # Return a 200 OK response immediately
+    return jsonify({"status": "success", "message": "Viber message received successfully."}), 200
+
 
 @app.route('/chatwoot', methods=['POST'])
 def chatwoot():
@@ -83,7 +94,16 @@ def orders():
     return jsonify({"status": "success", "message": f"Order {order_id} logged successfully."}), 200
 
 
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(('8.8.8.8', 80))  # connect to a public IP address
+    ip_address = s.getsockname()[0]
+    s.close()
+    return ip_address
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port, ssl_context=('/app/fullchain.pem', '/app/privkey.pem'))
+    data_dir='cert'
+    host = get_ip_address()
+    app.run(debug=True, host=host, port=port, ssl_context=(os.path.join(data_dir, 'fullchain.pem'), os.path.join(data_dir, 'privkey.pem')))
+

@@ -5,10 +5,11 @@ import requests
 from flask import jsonify
 from chatHelpers import *
 from viber_msg import *
-from gpt import *
-from searchBot import *
-
-
+from gpt import (
+    generate_response_for_bad_pricing_plans, 
+    analyze_response, 
+    process_analyzer_response, 
+    wipe_user_chat_history)
 
 
 # Constants
@@ -19,7 +20,7 @@ CHAT_API_URL = os.environ['CHAT_API_URL']
 
 ACCEPTED_PLANS = ['cc-employees1', 'enterprise', 'business']
 MESSAGE_DELAY = 2
-TIME_THRESHOLD = 3000
+TIME_THRESHOLD = 5000
 MAX_SEARCH_RESULTS = 1
 
 def send_pricing_plan_message(user_id, contact_name, pricing_plan, delay=None):
@@ -36,20 +37,11 @@ def send_pricing_plan_message(user_id, contact_name, pricing_plan, delay=None):
 def send_email_not_found_message(user_id, email):
     message_text = f"Не е открит потребител с този имейл: {email}. Моля, опитайте отново."
     status_code, response_text = send_viber_message(user_id, message_text)
-    print(f"Viber API response status code: {status_code}")
-    print(f"Viber API response content: {response_text}")
 
 
 def send_message_to_user(user_id, message_text):
     status_code, response_text = send_viber_message(user_id, message_text)
-    print(f"Viber API response status code: {status_code}")
-    print(f"Viber API response content: {response_text}")
 
-
-def send_message_to_user(user_id, message_text):
-    status_code, response_text = send_viber_message(user_id, message_text)
-    print(f"Viber API response status code: {status_code}")
-    print(f"Viber API response content: {response_text}")
 
 def create_or_get_latest_conversation(contact_id, inbox_id, api_access_token):
     latest_conversation = get_latest_conversation(contact_id, inbox_id, api_access_token)
@@ -57,8 +49,8 @@ def create_or_get_latest_conversation(contact_id, inbox_id, api_access_token):
         latest_conversation = create_conversation(contact_id, inbox_id, api_access_token)
     return latest_conversation
 
-def process_viber_request(request):
-    data = request.json
+def process_viber_request(request_data):
+    data = request_data
     event = data.get("event")
 
     if event == "webhook":
@@ -114,10 +106,9 @@ def process_viber_request(request):
                 pricing_plan = contact['custom_attributes'].get('pricingPlan')
 
                 if pricing_plan not in ACCEPTED_PLANS:
+                    # gpt_response = generate_response_for_bad_pricing_plans(user_id=user_id, contact_name=contact_name, search_result=None, message_text=f"Здравейте, какзвам се {contact_name}")
+                    send_viber_message(user_id, message_text=f"Здравейте, {contact_name}, разговаряте с CloudCart AI асистент. С какво мога да ви съдействам?", sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
                     update_contact_viber_id(contact_id, user_id, True, CHAT_API_ACCESS_TOKEN)
-                    gpt_response = generate_response_for_bad_pricing_plans(user_id=user_id, contact_name=contact_name, search_result=None, message_text=f"Здравейте, какзвам се {contact_name}")
-                    send_viber_message(user_id, gpt_response,sender_name="AI", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
-
                 else:
                     send_personalized_viber_message(user_id, contact_name)
                     update_contact_viber_id(contact_id, user_id, True, CHAT_API_ACCESS_TOKEN)
@@ -134,6 +125,7 @@ def process_viber_request(request):
         # Todo: Add external source for controlling the accepted plans
         if pricing_plan not in ACCEPTED_PLANS:
             # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
+            from searchBot import answer_bot
             search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
             print(f"\n\nНамерен резултат: {search_result}\n\n")
             gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
@@ -146,12 +138,9 @@ def process_viber_request(request):
 
             # If the conversation has ended, call finalize_ai_conversation_viber_message
             if conversation_ended:
-                finalize_ai_conversation_viber_message(user_id, gpt_response, sender_name="AI", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+                finalize_ai_conversation_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
             else:
-                send_viber_message(user_id, gpt_response, sender_name="AI", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
-
-
-
+                send_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
 
         else:
             contact_id = contact['id']
@@ -173,8 +162,6 @@ def process_viber_request(request):
                     "api_access_token": CHAT_API_ACCESS_TOKEN
                 }
                 requests.post(message_create_url, json=message_create_payload, headers=headers)
-
-
 
     owner_ta_id = None
     owner_id = None
@@ -225,5 +212,3 @@ def process_viber_request(request):
 
         # Send a Viber message asking the user to ask a new question
         gpt_response = generate_response_for_bad_pricing_plans(user_id, contact_name, search_result="", message_text=message_text)
-
-    return jsonify({'status': 'success'})

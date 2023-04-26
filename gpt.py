@@ -29,7 +29,7 @@ def generate_response_for_bad_pricing_plans(user_id, search_result, message_text
     conversation_history.extend(user_chat_histories[user_id])
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=conversation_history
     )
 
