@@ -2,5 +2,4 @@ chat/
 log/
 .env
 __pycache__/
-fullchain.pem
-privkey.pem
+cert/
