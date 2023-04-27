@@ -2,12 +2,35 @@ import openai
 import os
 import requests
 from viber_msg import *
+import time
+from openai.error import RateLimitError
 
 
 openai.api_key = os.environ['OPEN_AI']
 
 user_chat_histories = {}
+
 max_conversations = 10  # Add this variable to control the number of conversations
+
+def call_openai_with_retry(conversation_history):
+    retries = 5
+    backoff_factor = 2
+    for i in range(retries):
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=conversation_history
+            )
+            return response
+        except RateLimitError as e:
+            if i == retries - 1:  # If it's the last retry attempt, raise the exception
+                raise e
+            else:
+                sleep_duration = backoff_factor ** i
+                print(f"RateLimitError encountered. Retrying in {sleep_duration} seconds...")
+                time.sleep(sleep_duration)
+
+
 
 def generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name):
     global user_chat_histories
@@ -22,16 +45,13 @@ def generate_response_for_bad_pricing_plans(user_id, search_result, message_text
         user_chat_histories[user_id] = user_chat_histories[user_id][-max_conversations * 2:]
 
     conversation_history = [
-        {"role": "system", "content": f"Act as CloudCart support agent. Respond in Bulgarian! \n Let\'s think step by step trought the provided question and find the best possible solution for {contact_name} problem or question. Use empaty. \nIf the context is empty, say \"No answer\". If there is a link you must to skip it! \n\nName: {contact_name} translate in Bulgarian and use the first name\n\nContext: {search_result}"}
+        {"role": "system", "content": f"Act as CloudCart support agent. You are AI trained to support CloudCart customers. Respond in Bulgarian! \nLet\'s think step by step trought the provided question and find the best possible solution for {contact_name} problem or question. \nIf the context is empty, ask {contact_name} to refine the question. If there is a link you must to skip it! \n\nName: {contact_name} translate in Bulgarian and use the first name\n\nContext: {search_result}"}
     ]
 
     # Add the chat history to the conversation_history
     conversation_history.extend(user_chat_histories[user_id])
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=conversation_history
-    )
+    response = call_openai_with_retry(conversation_history)
 
     gpt = response.choices[0].message['content']
 
@@ -50,10 +70,7 @@ def conversation_history_list(user_id):
     for message in conversation:
         role = message["role"]
         content = message["content"].replace("\n", " ").strip()
-        if role == "user":
-            print(f"user: {content}")
-        elif role == "assistant":
-            print(f"assistant: {content}")
+
 
 def analyze_response(gpt):
     response = openai.ChatCompletion.create(
@@ -83,3 +100,4 @@ def wipe_user_chat_history(user_id):
         print(f"Chat history deleted for user_id: {user_id}")
     else:
         print(f"No chat history found for user_id: {user_id}")
+

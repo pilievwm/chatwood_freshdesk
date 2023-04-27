@@ -42,7 +42,7 @@ def viber():
     request_data = request.get_json()
 
     # Create a new thread for process_viber_request and start it
-    thread = threading.Thread(target=process_viber_request, args=(request_data,))
+    thread = threading.Thread(target=process_viber_request, args=(request_data, app))
     thread.start()
 
     # Return a 200 OK response immediately

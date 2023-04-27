@@ -1,13 +1,13 @@
 import requests
 import os
 from team import get_availability, get_team_structure
+from gpt import user_chat_histories
 
 # Constants
 CHAT_API_ACCESS_TOKEN = os.environ['CHAT_API_ACCESS_TOKEN']
 VIBER_API_URL = os.environ['VIBER_API_URL']
 X_VIBER_AUTH_TOKEN = os.environ['X_VIBER_AUTH_TOKEN']
 CHAT_API_URL = os.environ['CHAT_API_URL']
-
 
 def get_headers(api_access_token=None, viber_auth_token=None):
     headers = {"Content-Type": "application/json"}
@@ -19,6 +19,15 @@ def get_headers(api_access_token=None, viber_auth_token=None):
         headers["X-Viber-Auth-Token"] = viber_auth_token
         
     return headers
+
+def formatHistory(user_id):
+    chat_history = user_chat_histories.get(user_id, [])
+
+    # Convert the chat history into a human-readable format
+    formatted_chat_history = "**Bot conversation**\n\n"
+    for entry in chat_history:
+        formatted_chat_history += f"*{entry['role'].capitalize()}*: {entry['content']}\n\n"
+    return formatted_chat_history
 
 def assign_conversation(conversation_id, assignee_id, api_access_token):
     assign_url = f"{CHAT_API_URL}/conversations/{conversation_id}/assignments"
@@ -38,6 +47,17 @@ def update_contact_viber_id(contact_id, viber_id, received_message, api_access_t
     update_contact_payload = {
         "custom_attributes": {
             "viberid": viber_id
+        }
+    }
+    headers = get_headers(api_access_token=api_access_token)
+
+    requests.put(update_contact_url, json=update_contact_payload, headers=headers)
+
+def update_contact_bot_conversation(contact_id, api_access_token, bot_conversation):
+    update_contact_url = f"{CHAT_API_URL}/contacts/{contact_id}"
+    update_contact_payload = {
+        "custom_attributes": {
+            "bot_conversation": bot_conversation
         }
     }
     headers = get_headers(api_access_token=api_access_token)
@@ -75,6 +95,22 @@ def get_latest_conversation(contact_id, inbox_id, api_access_token):
             break
 
     return latest_conversation
+
+def chat_message_send(message_text, latest_conversation, private_msg, type):
+    # Create a message in the conversation
+    message_create_url = f"{CHAT_API_URL}/conversations/{latest_conversation['id']}/messages"
+    message_create_payload = {
+        "content": message_text,
+        "message_type": type,
+        "private": private_msg
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "api_access_token": CHAT_API_ACCESS_TOKEN
+    }
+    response = requests.post(message_create_url, json=message_create_payload, headers=headers)
+    return response
+
 
 def request_contact_search(user_id, api_access_token):
     contact_search_url = f"{CHAT_API_URL}/contacts/filter"
