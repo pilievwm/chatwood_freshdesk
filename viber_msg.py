@@ -1,12 +1,44 @@
 import requests
 import os
-
+from flask import jsonify, make_response
 
 # Constants
 CHAT_API_ACCESS_TOKEN = os.environ['CHAT_API_ACCESS_TOKEN']
 VIBER_API_URL = os.environ['VIBER_API_URL']
 X_VIBER_AUTH_TOKEN = os.environ['X_VIBER_AUTH_TOKEN']
 CHAT_API_URL = os.environ['CHAT_API_URL']
+
+def send_welcome_message(visitor_name):
+    welcome_message = {
+        "type": "text",
+        "text": f"Здравейте, {visitor_name}, Вие ползвате ли услугите на CloudCart",
+        "keyboard": {
+            "Type": "keyboard",
+            "DefaultHeight": False,
+            "Buttons": [
+                {
+                    "ActionType": "reply",
+                    "ActionBody": f"Да, клиент съм",
+                    "Text": f"Да, клиент съм",
+                    "TextSize": "regular",
+                    "Columns": 3, # Change this value as needed
+                    "Rows": 1,
+                    "BgColor": "#d3b8ff" # Blue color
+                },
+                {
+                    "ActionType": "reply",
+                    "ActionBody": "Не, но искам да стана клиент",
+                    "Text": "Не, но искам да стана клиент",
+                    "TextSize": "regular",
+                    "Columns": 3, # Change this value as needed
+                    "Rows": 1,
+                    "BgColor": "#ffd6b8" # Yellow color
+                }
+            ]
+        }
+    }
+    
+    return welcome_message
 
 def get_headers(api_access_token=None, viber_auth_token=None):
     headers = {"Content-Type": "application/json"}

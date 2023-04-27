@@ -42,7 +42,7 @@ def assign_conversation(conversation_id, assignee_id, api_access_token):
 
     return response
 
-def update_contact_viber_id(contact_id, viber_id, received_message, api_access_token):
+def update_contact_viber_id(contact_id, viber_id, api_access_token):
     update_contact_url = f"{CHAT_API_URL}/contacts/{contact_id}"
     update_contact_payload = {
         "custom_attributes": {

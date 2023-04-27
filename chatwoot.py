@@ -1,16 +1,40 @@
 from viber_msg import *
 from flask import jsonify
+from main import update_contact_bot_conversation, create_or_get_latest_conversation
+from chatHelpers import chat_message_send
 
 def process_chatwoot_payload(payload):
     event = payload.get('event')
+    
     conversation_status = payload.get("status")
     user_id = payload.get('meta', {}).get('sender', {}).get('custom_attributes', {}).get('viberid')
+    contact_id = payload.get('meta', {}).get('sender', {}).get('id', {})
 
     if event == "conversation_status_changed":
         if conversation_status != "open":
             initiate_new_viber_message(user_id)
+            # Update customer attribute Bot conversation to Human
+            update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="No")
+        else:
+            conversation_status == "open"
+            update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="Human")
+
+    elif event == "conversation_updated":
+        changed_attributes = payload.get('changed_attributes', [])
+        for attr in changed_attributes:
+            if 'assignee_id' in attr:
+                previous_value = attr['assignee_id']['previous_value']
+                current_value = attr['assignee_id']['current_value']
+
+                if previous_value != current_value:
+                    assignee = payload.get('meta', {}).get('assignee')
+                    if assignee:
+                        new_assignee = assignee.get('name')
+                        send_viber_message(user_id, f"_info: Вашият чат беше пренасочен към {new_assignee}_")
 
     messages = payload.get('conversation', {}).get('messages', [])
+
+    
     if not messages:
         return jsonify({"status": "success"})
 

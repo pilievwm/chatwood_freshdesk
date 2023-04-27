@@ -41,9 +41,16 @@ def viber():
     # Get a copy of the request's JSON data
     request_data = request.get_json()
 
-    # Create a new thread for process_viber_request and start it
-    thread = threading.Thread(target=process_viber_request, args=(request_data, app))
-    thread.start()
+    # Check if the event is "conversation_started"
+    if request_data.get("event") == "conversation_started":
+        result = process_viber_request(request_data, app)
+        if isinstance(result, tuple):
+            response, status_code = result
+            return response, status_code
+    else:
+        # Create a new thread for process_viber_request and start it
+        thread = threading.Thread(target=process_viber_request, args=(request_data, app))
+        thread.start()
 
     # Return a 200 OK response immediately
     return jsonify({"status": "success", "message": "Viber message received successfully."}), 200

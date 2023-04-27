@@ -6,13 +6,15 @@ import time
 from openai.error import RateLimitError
 
 
+
+
 openai.api_key = os.environ['OPEN_AI']
 
 user_chat_histories = {}
 
 max_conversations = 10  # Add this variable to control the number of conversations
 
-def call_openai_with_retry(conversation_history):
+def call_openai_with_retry(conversation_history, user_id):
     retries = 5
     backoff_factor = 2
     for i in range(retries):
@@ -29,6 +31,9 @@ def call_openai_with_retry(conversation_history):
                 sleep_duration = backoff_factor ** i
                 print(f"RateLimitError encountered. Retrying in {sleep_duration} seconds...")
                 time.sleep(sleep_duration)
+        except openai.error.InvalidRequestError as e:
+            send_viber_message(user_id, f"Моля, променете въпроса си, за да можем да ви отговорим")
+            raise e
 
 
 
