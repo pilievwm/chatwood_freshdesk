@@ -56,7 +56,7 @@ def generate_response_for_bad_pricing_plans(user_id, search_result, message_text
     # Add the chat history to the conversation_history
     conversation_history.extend(user_chat_histories[user_id])
 
-    response = call_openai_with_retry(conversation_history)
+    response = call_openai_with_retry(conversation_history, user_id)
 
     gpt = response.choices[0].message['content']
 
