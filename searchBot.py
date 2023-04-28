@@ -52,7 +52,7 @@ def order_document_sections_by_query_similarity(query: str, contexts: dict[(str,
     
     return document_similarities[:num_results]
 
-MAX_SECTION_LEN = 1300
+MAX_SECTION_LEN = 1800
 MIN_SECTION_LEN = 20
 SEPARATOR = "\n* "
 ENCODING = "cl100k_base"  # encoding for text-embedding-ada-002

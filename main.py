@@ -12,6 +12,7 @@ from gpt import (
     wipe_user_chat_history)
 
 
+
 # Constants
 CHAT_API_ACCESS_TOKEN = os.environ['CHAT_API_ACCESS_TOKEN']
 VIBER_API_URL = os.environ['VIBER_API_URL']
@@ -21,7 +22,12 @@ CHAT_API_URL = os.environ['CHAT_API_URL']
 ACCEPTED_PLANS = ['cc-employees', 'enterprise', 'business']
 MESSAGE_DELAY = 2
 TIME_THRESHOLD = 5000
-MAX_SEARCH_RESULTS = 1
+MAX_SEARCH_RESULTS = 3
+
+# Global variable to store the last message for each user
+last_messages = {}
+message_timestamps = {}
+message_counters = {}
 
 def send_pricing_plan_message(user_id, contact_name, pricing_plan, delay=None):
     message_text = f"{contact_name}, за съжаление Вашият абонаментен план *{pricing_plan}* не включва чат поддръжка. \n\nТук можете да се запознаете с цените на нашите абонаментни планове:"
@@ -52,8 +58,11 @@ def talk_to_ta(user_id, latest_conversation, owner_ta_status, owner_ta_name, own
         else:
             first_name = owner_ta_name.split(' ')[0]
             send_viber_message(user_id, f"Свързах Ви в чат сесия с {owner_ta_name}. Тъй като той не е на разположение в момента, моля, оставете своето съобщение тук. \n\n{first_name} ще се свърже с Вас, веднага щом бъде на линия. \n\nБлагодарим за търпението!")
+            print("TA Offline")
             assignee_id = owner_ta_id
             assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
+
+            initiate_close_chat_viber_message(user_id, message_text=" ")
 
     else:
         print(f"Failed to find user with email {owner_ta_name}.")
@@ -67,8 +76,12 @@ def talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name,
         else:
             first_name = owner_name.split(' ')[0]
             send_viber_message(user_id, message_text=f"Свързах Ви в чат сесия с {owner_name}. Тъй като той не е на разположение в момента, моля, оставете своето съобщение тук. \n\n{first_name} ще се свърже с Вас, веднага щом бъде на линия. \n\nБлагодарим за търпението!")
+            print("AM Offline")
             assignee_id = owner_id
             assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
+            print("AM Offline")
+            initiate_close_chat_viber_message(user_id, message_text=" ")
+
             
     else:
         print(f"Failed to find user with email {owner_name}.")
@@ -82,42 +95,60 @@ def create_or_get_latest_conversation(contact_id, inbox_id, api_access_token):
 
 
 def process_viber_request(request_data, app):
-    data = request_data
-    event = data.get("event")
+    with app.app_context():
+        data = request_data
+        event = data.get("event")
 
-    if event == "webhook":
-        return '', 200
+        if event == "webhook":
+            return '', 200
 
-    if event == "message":
-        user_key = 'sender'
-    elif event == "conversation_started":
-        user_key = 'user'
-        visitor_name = data[user_key]['name']
-        welcome_message = send_welcome_message(visitor_name)
-        return jsonify(welcome_message), 200
+        if event == "message":
+            user_key = 'sender'
+        elif event == "conversation_started":
+            user_key = 'user'
+            visitor_name = data[user_key]['name']
+            welcome_message = send_welcome_message(visitor_name)
+            return jsonify(welcome_message), 200
 
-    else:
-        return jsonify({'status': 'ignored'})
+        else:
+            return jsonify({'status': 'ignored'})
 
-    if user_key not in data:
-        print(f"No {user_key} information in the received data.")
-        return '', 400
+        if user_key not in data:
+            print(f"No {user_key} information in the received data.")
+            return '', 400
 
-    user_id = data[user_key]['id']
-    
-    if event == "message":
-        message_type = data['message'].get('type', 'text')
-        if message_type == 'text':
-            message_text = data['message']['text']
+        user_id = data[user_key]['id']
 
-        elif message_type == 'picture' or message_type == 'video':
-            message_media_url = data['message']['media']
+        # Throttle check
+        current_time = time.time()
+        if user_id in message_timestamps and current_time - message_timestamps[user_id] < 1:
+            message_counters[user_id] += 1
+            if message_counters[user_id] > 3:
+                return jsonify({'status': 'throttled'}), 429
+        else:
+            message_timestamps[user_id] = current_time
+            message_counters[user_id] = 1
+
+        if event == "message":
+            message_type = data['message'].get('type', 'text')
+            if message_type == 'text':
+                message_text = data['message']['text']
+
+                # Check if the message is equal to the previous one
+                if user_id in last_messages and message_text == last_messages[user_id]:
+                    return jsonify({'status': 'message_skipped'}), 200
+                else:
+                    last_messages[user_id] = message_text
+
+            elif message_type == 'picture' or message_type == 'video':
+                message_media_url = data['message']['media']
+            else:
+                message_text = None
+                message_media_url = None
         else:
             message_text = None
             message_media_url = None
-    else:
-        message_text = None
-        message_media_url = None
+
 
 #############
     response_data = request_contact_search(user_id, CHAT_API_ACCESS_TOKEN)
@@ -147,6 +178,7 @@ def process_viber_request(request_data, app):
                 if (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation is None) or (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation == "No") or (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation == "Maybe"):
                         print(f"Case 1 {action_body} - Bot conv: {bot_conversation}")
                         if owner_id is not None:
+                            print("Case 1 has owner ID")
                             talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name, message_text, owner_email)
                             chat_message_send(message_text, latest_conversation, False, type="incoming")
 
@@ -204,14 +236,20 @@ def process_viber_request(request_data, app):
                         gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
                         send_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
                                 ### If user without plan decide to start a new AI session ###
-
-                elif bot_conversation == "Human":
+                
+                elif bot_conversation == "Human" and not action_body == "Прекрати чат сесията":
                         print(f"Case 5 {action_body} - Bot conv: {bot_conversation}")
                         chat_message_send(message_text, latest_conversation, False, type="incoming")
+                
+                # User intent to close chat session
+                elif action_body == "Прекрати чат сесията" and bot_conversation == "Human":
+                        print(f"Case 6 {action_body} - Bot conv: {bot_conversation}")
+                        chat_message_send(message_text=f"The chat was closed by the customer: {contact_name}", latest_conversation=latest_conversation, private_msg=True, type="outgoing")
+                        toggle_conversation(latest_conversation, CHAT_API_ACCESS_TOKEN)
                         
                 else:
                     send_personalized_viber_message(user_id, contact_name)
-                    print(f"Case 6 {action_body} - Bot conv: {bot_conversation}")
+                    print(f"ELSE Case 7 {action_body} - Bot conv: {bot_conversation}")
             break
     else:
         response_data = request_contact_search(user_id, CHAT_API_ACCESS_TOKEN)

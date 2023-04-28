@@ -23,7 +23,7 @@ def send_welcome_message(visitor_name):
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
                     "Rows": 1,
-                    "BgColor": "#d3b8ff" # Blue color
+                    "BgColor": "#eee3ff" # Blue color
                 },
                 {
                     "ActionType": "reply",
@@ -32,7 +32,7 @@ def send_welcome_message(visitor_name):
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
                     "Rows": 1,
-                    "BgColor": "#ffd6b8" # Yellow color
+                    "BgColor": "#ffefe3" # Yellow color
                 }
             ]
         }
@@ -154,7 +154,7 @@ def send_personalized_viber_message(user_id, contact_name):
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
                     "Rows": 1,
-                    "BgColor": "#d3b8ff" # Blue color
+                    "BgColor": "#eee3ff" # Blue color
                 },
                 {
                     "ActionType": "reply",
@@ -163,7 +163,7 @@ def send_personalized_viber_message(user_id, contact_name):
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
                     "Rows": 1,
-                    "BgColor": "#ffd6b8" # Yellow color
+                    "BgColor": "#ffefe3" # Yellow color
                 }
             ]
         }
@@ -173,8 +173,7 @@ def send_personalized_viber_message(user_id, contact_name):
     response = requests.post(VIBER_API_URL + "/send_message", json=send_message_payload, headers=headers)
     return response.status_code, response.text
 
-def initiate_new_viber_message(user_id):
-    message_text = " "
+def initiate_new_viber_message(user_id, message_text):
     send_message_payload = {
         "receiver": user_id,
         "min_api_version": 7,
@@ -192,7 +191,7 @@ def initiate_new_viber_message(user_id):
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
                     "Rows": 1,
-                    "BgColor": "#d3b8ff" # Blue color
+                    "BgColor": "#eee3ff" # Blue color
                 },
                 {
                     "ActionType": "reply",
@@ -201,7 +200,37 @@ def initiate_new_viber_message(user_id):
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
                     "Rows": 1,
-                    "BgColor": "#ffd6b8" # Yellow color
+                    "BgColor": "#ffefe3" # Yellow color
+                }
+            ]
+        }
+    }
+
+    headers = get_headers(viber_auth_token=X_VIBER_AUTH_TOKEN)
+    response = requests.post(VIBER_API_URL + "/send_message", json=send_message_payload, headers=headers)
+    return response.status_code, response.text
+
+def initiate_close_chat_viber_message(user_id, message_text):
+    send_message_payload = {
+        "receiver": user_id,
+        "min_api_version": 7,
+        "type": "text",
+        "text": message_text,
+        "keyboard": {
+            "Type": "keyboard",
+            "DefaultHeight": False,
+            "Buttons": [
+                {
+                    "ActionType": "reply",
+                    "ActionBody": f"Прекрати чат сесията",
+                    "Text": f"Прекрати чат сесията",
+                    "Columns": 6, # Change this value as needed
+                    "Rows": 1,
+                    "BgColor": "#eee3ff",
+                    "TextVAlign": "middle",
+                    "TextHAlign": "center",
+                    "TextOpacity": 60,
+                    "TextSize": "small" # Blue color
                 }
             ]
         }
@@ -220,23 +249,13 @@ def finalize_ai_conversation_viber_message(user_id, gpt_response, sender_name=No
         "keyboard": {
             "Type": "keyboard",
             "DefaultHeight": False,
-            "InputFieldState": "hidden",
             "Buttons": [
-                {
-                    "ActionType": "reply",
-                    "ActionBody": f"Имам още въпроси по темата",
-                    "Text": f"Имам още въпроси по темата",
-                    "TextSize": "regular",
-                    "Columns": 4, # Change this value as needed
-                    "Rows": 1,
-                    "BgColor": "#b8c0ff"
-                },
                 {
                     "ActionType": "reply",
                     "ActionBody": "Имам въпрос на различна тематика",
                     "Text": "Имам въпрос на различна тематика",
                     "TextSize": "regular",
-                    "Columns": 4, # Change this value as needed
+                    "Columns": 6, # Change this value as needed
                     "Rows": 1,
                     "BgColor": "#ffb8c3"
                 }
@@ -264,8 +283,16 @@ def finalize_ai_conversation_before_real_human_viber_message(user_id, gpt_respon
         "keyboard": {
             "Type": "keyboard",
             "DefaultHeight": False,
-            "InputFieldState": "hidden",
             "Buttons": [
+                {
+                    "ActionType": "reply",
+                    "ActionBody": f"Имам още въпроси по тази тема",
+                    "Text": f"Имам въпроси по тази тема",
+                    "TextSize": "regular",
+                    "Columns": 3, # Change this value as needed
+                    "Rows": 1,
+                    "BgColor": "#e0e4ff"
+                },
                 {
                     "ActionType": "reply",
                     "ActionBody": f"Искам да се свържа с моя акаунт мениджър",
@@ -277,20 +304,11 @@ def finalize_ai_conversation_before_real_human_viber_message(user_id, gpt_respon
                 },
                 {
                     "ActionType": "reply",
-                    "ActionBody": f"Имам още въпроси по тази тема",
-                    "Text": f"Имам въпроси по тази тема",
-                    "TextSize": "regular",
-                    "Columns": 3, # Change this value as needed
-                    "Rows": 1,
-                    "BgColor": "#b8c0ff"
-                },
-                {
-                    "ActionType": "reply",
                     "ActionBody": "Имам въпрос на различна тема",
                     "Text": "Имам въпрос на различна тема",
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
-                    "Rows": 1,
+                    "Rows": 2,
                     "BgColor": "#ffb8c3"
                 }
                 ,
@@ -300,8 +318,8 @@ def finalize_ai_conversation_before_real_human_viber_message(user_id, gpt_respon
                     "Text": "Искам да говоря с технически асистент",
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
-                    "Rows": 1,
-                    "BgColor": "#ff0022"
+                    "Rows": 2,
+                    "BgColor": "#ffe0e4"
                 }
             ]
         }
@@ -336,7 +354,7 @@ def handle_ai_help_request(user_id):
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
                     "Rows": 1,
-                    "BgColor": "#d3b8ff" # Blue color
+                    "BgColor": "#eee3ff" # Blue color
                 },
                 {
                     "ActionType": "reply",
@@ -345,7 +363,7 @@ def handle_ai_help_request(user_id):
                     "TextSize": "regular",
                     "Columns": 3, # Change this value as needed
                     "Rows": 1,
-                    "BgColor": "#ffd6b8" # Yellow color
+                    "BgColor": "#ffefe3" # Yellow color
                 }
             ]
         }

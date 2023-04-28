@@ -5,9 +5,6 @@ from viber_msg import *
 import time
 from openai.error import RateLimitError
 
-
-
-
 openai.api_key = os.environ['OPEN_AI']
 
 user_chat_histories = {}
@@ -20,8 +17,10 @@ def call_openai_with_retry(conversation_history, user_id):
     for i in range(retries):
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=conversation_history
+                model="gpt-4",
+                messages=conversation_history,
+                temperature=0
+
             )
             return response
         except RateLimitError as e:
@@ -50,6 +49,7 @@ def generate_response_for_bad_pricing_plans(user_id, search_result, message_text
         user_chat_histories[user_id] = user_chat_histories[user_id][-max_conversations * 2:]
 
     conversation_history = [
+         
         {"role": "system", "content": f"Act as CloudCart support agent. You are AI trained to support CloudCart customers. Respond in Bulgarian! \nLet\'s think step by step trought the provided question and find the best possible solution for {contact_name} problem or question. \nIf the context is empty, ask {contact_name} to refine the question. If there is a link you must to skip it! \n\nName: {contact_name} translate in Bulgarian and use the first name\n\nContext: {search_result}"}
     ]
 

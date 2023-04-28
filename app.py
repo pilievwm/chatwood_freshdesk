@@ -4,11 +4,13 @@ import json
 from ct import handle_create_ticket
 from conv import handle_ticket_info
 from login_user import handle_login_user
-from chatHelpers import get_team_structure, handle_team_availability
+from chatHelpers import get_team_structure, handle_team_availability, update_contact_bot_conversation, CHAT_API_ACCESS_TOKEN, CHAT_API_URL
 from main import process_viber_request
 from chatwoot import process_chatwoot_payload
 import threading
 import socket
+import requests
+
 
 
 app = Flask(__name__)

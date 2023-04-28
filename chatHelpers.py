@@ -79,6 +79,31 @@ def create_conversation(contact_id, inbox_id, api_access_token):
     response = requests.post(create_conversation_url, json=create_conversation_payload, headers=headers)
     return response.json()
 
+def toggle_conversation(latest_conversation, api_access_token):
+    get_url = f"{CHAT_API_URL}/conversations/{latest_conversation['id']}"
+    toggle_url = f"{CHAT_API_URL}/conversations/{latest_conversation['id']}/toggle_status"
+    headers = {
+        "Content-Type": "application/json",
+        "api_access_token": api_access_token
+    }
+
+    # Get conversation details
+    response = requests.get(get_url, headers=headers)
+    conversation_data = response.json()
+
+    # Check current status
+    current_status = conversation_data.get('status')
+    # Toggle status
+    new_status = 'resolved' if current_status == 'open' else 'open'
+    payload = {
+        "status": new_status
+    }
+    # Update conversation status
+    response = requests.post(toggle_url, json=payload, headers=headers)
+
+    return response
+
+
 def get_latest_conversation(contact_id, inbox_id, api_access_token):
     get_conversations_url = f"{CHAT_API_URL}/contacts/{contact_id}/conversations"
     headers = {

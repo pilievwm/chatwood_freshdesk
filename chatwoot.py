@@ -9,10 +9,12 @@ def process_chatwoot_payload(payload):
     conversation_status = payload.get("status")
     user_id = payload.get('meta', {}).get('sender', {}).get('custom_attributes', {}).get('viberid')
     contact_id = payload.get('meta', {}).get('sender', {}).get('id', {})
+    # Get the JSON payload from the request
 
+    
     if event == "conversation_status_changed":
         if conversation_status != "open":
-            initiate_new_viber_message(user_id)
+            initiate_new_viber_message(user_id, message_text=f"_info: Чат сесията е затворена. Благодарим ви!_")
             # Update customer attribute Bot conversation to Human
             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="No")
         else:
@@ -46,7 +48,6 @@ def process_chatwoot_payload(payload):
 
         # Extract the required variables from the response
         viberid = payload['conversation']['meta']['sender']['custom_attributes']['viberid']
-        conversation_id = payload['conversation']['id']
         message_text = message['content']
         sender = message.get('sender', {})
         sender_name = sender.get('available_name') or sender.get('name')
@@ -56,12 +57,12 @@ def process_chatwoot_payload(payload):
         if 'attachments' in message:
             handle_chatwoot_image_message(payload)
         else:
-            handle_chatwoot_message(viberid, conversation_id, message_text, sender_name, sender_avatar)
+            handle_chatwoot_message(viberid, message_text, sender_name, sender_avatar)
 
     return jsonify({"status": "success"})
 
 
-def handle_chatwoot_message(viberid, conversation_id, message_text, sender_name, sender_avatar):
+def handle_chatwoot_message(viberid, message_text, sender_name, sender_avatar):
     # Send the message to the Viber user using the send_viber_message function
     send_viber_message(user_id=viberid, message_text=message_text, sender_name=sender_name, sender_avatar=sender_avatar)
 
