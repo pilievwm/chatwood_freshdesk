@@ -151,6 +151,7 @@ def process_viber_request(request_data, app):
 
 
 #############
+    
     response_data = request_contact_search(user_id, CHAT_API_ACCESS_TOKEN)
     if response_data['payload']:
         contact = response_data['payload'][0]
@@ -172,85 +173,91 @@ def process_viber_request(request_data, app):
 
         for _ in range(1):  
             if latest_conversation and (owner_id is not None or owner_ta_id is not None):
-
+                combined_text = formatHistory(user_id)
 
                 ####### When user decide to talk with AM from the viber message ######
-                if (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation is None) or (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation == "No") or (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation == "Maybe"):
-                        print(f"Case 1 {action_body} - Bot conv: {bot_conversation}")
-                        if owner_id is not None:
-                            print("Case 1 has owner ID")
-                            talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name, message_text, owner_email)
-                            chat_message_send(message_text, latest_conversation, False, type="incoming")
-
-
-                ####### When user decide to talk with Technical assistant support team ######
-                elif action_body == "Имам въпрос свързан с работата на платформата" or action_body == "Имам още въпроси по тази тема" or bot_conversation == "Yes":
-                        print(f"Case 2 {action_body} - Bot conv: {bot_conversation}")
-                        update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN, bot_conversation="Yes")
-
-                        if owner_ta_id is not None:
-                            # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
-                            send_viber_typing_status(user_id, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
-                            from searchBot import answer_bot
-                            search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
-                            print(f"\n\nНамерен резултат: {search_result}\n\n")
-                            gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
-
-                            # Analyze the response
-                            analyzer_response = analyze_response(gpt_response)
-
-                            # Process the analyzer's response
-                            conversation_ended = process_analyzer_response(analyzer_response, user_id)
-
-                            # If the conversation has ended, call finalize_ai_conversation_viber_message
-                            if conversation_ended:
-                                finalize_ai_conversation_before_real_human_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
-                                update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="Maybe")
-                            else:
-                                send_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")                   
-
-                # When user decide to talk with his personal Technical assistant
-                elif action_body == "Искам да говоря с технически асистент":
-                    if bot_conversation == "Maybe" or bot_conversation == "Yes":
-                        print(f"Case 3 {action_body} - Bot conv: {bot_conversation}")
-                        talk_to_ta(user_id, latest_conversation, owner_ta_status, owner_ta_name, owner_ta_id, message_text)
+                if (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation is None) or (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation == "No") or (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation == "Yes"):
+                    print(f"Case 1 {action_body} - Bot conv: {bot_conversation}")
+                    if owner_id is not None:
+                        print("Case 1 has owner ID")
+                        talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name, message_text, owner_email)
                         chat_message_send(message_text, latest_conversation, False, type="incoming")
-                         # Add bot conversation as private note
-                        combined_text = formatHistory(user_id)
-                        chat_message_send(combined_text, latest_conversation, True, type="outgoing")
+                        
+                        if combined_text is not None:
+                            chat_message_send(combined_text, latest_conversation, True, type="outgoing")
+                            wipe_user_chat_history(user_id)
+                                
+                # When user decide to talk with his personal Technical assistant
+                elif action_body == "Искам да говоря с технически асистент" and bot_conversation == "Yes":
+                    print(f"Case 2 {action_body} - Bot conv: {bot_conversation}")
+                    talk_to_ta(user_id, latest_conversation, owner_ta_status, owner_ta_name, owner_ta_id, message_text)
+                    toggle_conversation(latest_conversation, CHAT_API_ACCESS_TOKEN) 
+                    chat_message_send(message_text, latest_conversation, False, type="incoming")
+                        # Add bot conversation as private note
+                    if combined_text is not None:
+                            chat_message_send(combined_text, latest_conversation, True, type="outgoing")
+                            wipe_user_chat_history(user_id)
                 
                 ### If user without plan decide to start a new AI session ###
-                elif action_body == "Имам въпрос на различна тема":
-                    if bot_conversation == "Maybe" or bot_conversation == "Yes":
-                        print(f"Case 4 {action_body} - Bot conv: {bot_conversation}")
-                        update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN, bot_conversation="Yes")
+                elif action_body == "Имам въпрос на различна тема" and bot_conversation == "Yes":
+                    print(f"Case 3 {action_body} - Bot conv: {bot_conversation}")
+                    update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN, bot_conversation="Yes")
 
-                        # Add bot conversation as private note
-                        combined_text = formatHistory(user_id)
-                        chat_message_send(combined_text, latest_conversation, True, type="outgoing")
+                    # Add bot conversation as private note
+                    if combined_text is not None:
+                            chat_message_send(combined_text, latest_conversation, True, type="outgoing")
 
-                        # Call the function to wipe user_chat_histories
-                        wipe_user_chat_history(user_id)
-                        search_result = ""
-                        # Send a Viber message asking the user to ask a new question
-                        gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
-                        send_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
-                                ### If user without plan decide to start a new AI session ###
+                    # Call the function to wipe user_chat_histories
+                    wipe_user_chat_history(user_id)
+                    search_result = ""
+                    # Send a Viber message asking the user to ask a new question
+                    # gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
+                    gpt_response = f"{contact_name}, какъв е Вашият въпрос? Моля опишете го възможно най-добре"
+                    send_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
                 
+                ####### When user decide to talk with Technical assistant support team ######
+                elif action_body == "Имам въпрос свързан с работата на платформата" or bot_conversation == "Yes":
+                    print(f"Case 4 {action_body} - Bot conv: {bot_conversation}")
+                    update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN, bot_conversation="Yes")
+
+                    if owner_ta_id is not None:
+                        # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
+                        send_viber_typing_status(user_id, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+                        from searchBot import answer_bot
+                        search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
+                        print(f"\n\nНамерен резултат: {search_result}\n\n")
+                        gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
+
+
+                        # Analyze the response
+                        # analyzer_response = analyze_response(gpt_response)
+
+                        # Process the analyzer's response
+                        # conversation_ended = process_analyzer_response(analyzer_response, user_id)
+
+                        # If the conversation has ended, call finalize_ai_conversation_viber_message
+                        #if conversation_ended:
+                        #    update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="Maybe")
+                        #else:
+                        # send_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")                   
+                        finalize_ai_conversation_before_real_human_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+
+                # Continues conversation with agent                
                 elif bot_conversation == "Human" and not action_body == "Прекрати чат сесията":
-                        print(f"Case 5 {action_body} - Bot conv: {bot_conversation}")
-                        chat_message_send(message_text, latest_conversation, False, type="incoming")
+                    print(f"Case 5 {action_body} - Bot conv: {bot_conversation}")
+                    chat_message_send(message_text, latest_conversation, False, type="incoming")
                 
                 # User intent to close chat session
                 elif action_body == "Прекрати чат сесията" and bot_conversation == "Human":
-                        print(f"Case 6 {action_body} - Bot conv: {bot_conversation}")
-                        chat_message_send(message_text=f"The chat was closed by the customer: {contact_name}", latest_conversation=latest_conversation, private_msg=True, type="outgoing")
-                        toggle_conversation(latest_conversation, CHAT_API_ACCESS_TOKEN)
-                        
+                    print(f"Case 6 {action_body} - Bot conv: {bot_conversation}")
+                    chat_message_send(message_text=f"The chat was closed by the customer: {contact_name}", latest_conversation=latest_conversation, private_msg=True, type="outgoing")
+                    toggle_conversation(latest_conversation, CHAT_API_ACCESS_TOKEN)     
                 else:
                     send_personalized_viber_message(user_id, contact_name)
                     print(f"ELSE Case 7 {action_body} - Bot conv: {bot_conversation}")
             break
+    
+    ###################################### NOT ACCEPTED PLANS ###########################################
     else:
         response_data = request_contact_search(user_id, CHAT_API_ACCESS_TOKEN)
         print(f"Check response data {response_data}")

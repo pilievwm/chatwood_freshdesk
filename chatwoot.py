@@ -21,7 +21,7 @@ def process_chatwoot_payload(payload):
             conversation_status == "open"
             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="Human")
 
-    elif event == "conversation_updated":
+    elif event == "conversation_updated" and conversation_status == "open":
         changed_attributes = payload.get('changed_attributes', [])
         for attr in changed_attributes:
             if 'assignee_id' in attr:

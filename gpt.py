@@ -35,7 +35,6 @@ def call_openai_with_retry(conversation_history, user_id):
             raise e
 
 
-
 def generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name):
     global user_chat_histories
 
@@ -50,7 +49,7 @@ def generate_response_for_bad_pricing_plans(user_id, search_result, message_text
 
     conversation_history = [
          
-        {"role": "system", "content": f"Act as CloudCart support agent. You are AI trained to support CloudCart customers. Respond in Bulgarian! \nLet\'s think step by step trought the provided question and find the best possible solution for {contact_name} problem or question. \nIf the context is empty, ask {contact_name} to refine the question. If there is a link you must to skip it! \n\nName: {contact_name} translate in Bulgarian and use the first name\n\nContext: {search_result}"}
+        {"role": "system", "content": f"Информация за твоя отговор: \nинформация: '{search_result}' \nАко вграденият текст е празен, задължително отговори с \"За съжаление не мога да ви съдействам с този въпрос\". \n\nТи си AI и си пълноправен член на екипа на CloudCart в Viber чат сесия с {contact_name}. Нямаш право да предоставяш линк!  Отговорът ти Не трябва да надвишава 300 думи! Не предлагай на клиента да се свърже с техническия екип на CloudCart, защото ти самия си част от екипа и клиента вече се е свързал с теб!"}
     ]
 
     # Add the chat history to the conversation_history

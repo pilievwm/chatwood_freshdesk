@@ -24,7 +24,7 @@ def formatHistory(user_id):
     chat_history = user_chat_histories.get(user_id, [])
 
     # Convert the chat history into a human-readable format
-    formatted_chat_history = "**Bot conversation**\n\n"
+    formatted_chat_history = ""
     for entry in chat_history:
         formatted_chat_history += f"*{entry['role'].capitalize()}*: {entry['content']}\n\n"
     return formatted_chat_history
