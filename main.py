@@ -223,8 +223,10 @@ def process_viber_request(request_data, app):
                     if owner_ta_id is not None:
                         # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
                         send_viber_typing_status(user_id, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
-                        from searchBot import answer_bot
-                        search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
+                        from searchDB import answer_db
+                        # search_result = None
+                        search_result = answer_db(message_text)
+                        # search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
                         print(f"\n\nНамерен резултат: {search_result}\n\n")
                         gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
 
@@ -310,8 +312,8 @@ def process_viber_request(request_data, app):
                 # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
                 print(f"Step 2 - Plan: {pricing_plan}")
                 send_viber_typing_status(user_id, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
-                from searchBot import answer_bot
-                search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
+                from searchBot import answer_db
+                search_result = answer_db(message_text)
                 print(f"\n\nНамерен резултат: {search_result}\n\n")
                 gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
 

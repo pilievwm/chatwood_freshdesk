@@ -48,8 +48,8 @@ def generate_response_for_bad_pricing_plans(user_id, search_result, message_text
         user_chat_histories[user_id] = user_chat_histories[user_id][-max_conversations * 2:]
 
     conversation_history = [
-         
-        {"role": "system", "content": f"Информация за твоя отговор: \nинформация: '{search_result}' \nАко вграденият текст е празен, задължително отговори с \"За съжаление не мога да ви съдействам с този въпрос\". \n\nТи си AI и си пълноправен член на екипа на CloudCart в Viber чат сесия с {contact_name}. Нямаш право да предоставяш линк!  Отговорът ти Не трябва да надвишава 300 думи! Не предлагай на клиента да се свърже с техническия екип на CloudCart, защото ти самия си част от екипа и клиента вече се е свързал с теб!"}
+        {"role": "system", "content": f"Информация за твоя отговор: \nинформация: '{search_result}' \nАко липсва информация за твоя отговор, задължително отговори с \"За съжаление не мога да ви съдействам с този въпрос\". \n\nТи си AI и си пълноправен член на екипа на CloudCart в Viber чат сесия с {contact_name}."} 
+        # {"role": "system", "content": f"Информация за твоя отговор: \nинформация: '{search_result}' \nАко вграденият текст е празен, задължително отговори с \"За съжаление не мога да ви съдействам с този въпрос\". \n\nТи си AI и си пълноправен член на екипа на CloudCart в Viber чат сесия с {contact_name}. Нямаш право да предоставяш линк!  Отговорът ти Не трябва да надвишава 300 думи! Не предлагай на клиента да се свърже с техническия екип на CloudCart, защото ти самия си част от екипа и клиента вече се е свързал с теб!"}
     ]
 
     # Add the chat history to the conversation_history
@@ -64,7 +64,7 @@ def generate_response_for_bad_pricing_plans(user_id, search_result, message_text
 
     # Print the conversation history in the desired format
     conversation_history_list(user_id)
-
+    
     return gpt
 
 

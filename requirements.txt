@@ -5,3 +5,5 @@ openai
 numpy
 pandas
 tiktoken
+langchain
+faiss-cpu
