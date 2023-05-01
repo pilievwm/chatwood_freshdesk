@@ -224,11 +224,12 @@ def process_viber_request(request_data, app):
                         # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
                         send_viber_typing_status(user_id, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
                         from searchDB import answer_db
+                        from searchBot import answer_bot
                         # search_result = None
-                        search_result = answer_db(message_text)
-                        # search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
+                        # search_result = answer_db(message_text)
+                        search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
                         print(f"\n\nНамерен резултат: {search_result}\n\n")
-                        gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
+                        # gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
 
 
                         # Analyze the response
@@ -242,7 +243,7 @@ def process_viber_request(request_data, app):
                         #    update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="Maybe")
                         #else:
                         # send_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")                   
-                        finalize_ai_conversation_before_real_human_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+                        finalize_ai_conversation_before_real_human_viber_message(user_id, gpt_response="1", sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
 
                 # Continues conversation with agent                
                 elif bot_conversation == "Human" and not action_body == "Прекрати чат сесията":

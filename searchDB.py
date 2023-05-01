@@ -14,6 +14,7 @@ from langchain.chat_models import ChatOpenAI
 load_dotenv()
 
 openai_api_key = os.environ["OPENAI_API_KEY"]
+embeddings = OpenAIEmbeddings()
 
 def pretty_print_docs(docs):
     return f"\n{'-'}\n".join([d.page_content for i, d in enumerate(docs)])
@@ -21,9 +22,9 @@ def pretty_print_docs(docs):
 
 # Create retriever and index documents
 
-retriever = FAISS.load_local("faiss_index", OpenAIEmbeddings()).as_retriever()
+retriever = FAISS.load_local("faiss_index",embeddings).as_retriever()
 
-embeddings = OpenAIEmbeddings()
+
 
 llm = ChatOpenAI(model='gpt-3.5-turbo',temperature=0)
 
