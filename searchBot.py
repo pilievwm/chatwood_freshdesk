@@ -56,7 +56,7 @@ def order_document_sections_by_query_similarity(query: str, contexts: dict[(str,
     return filtered_document_similarities[:num_results]
 
 
-MAX_SECTION_LEN = 200
+MAX_SECTION_LEN = 1200
 MIN_SECTION_LEN = 20
 SEPARATOR = "\n* "
 ENCODING = "cl100k_base"  # encoding for text-embedding-ada-002
@@ -68,11 +68,11 @@ f"Context separator contains {separator_len} tokens"
 
 def construct_prompt(search: str, context_embeddings: dict, df: pd.DataFrame, num_results: int = 3) -> str:
 
-    most_relevant_document_sections = order_document_sections_by_query_similarity(search, context_embeddings, num_results, similarity_threshold=0.11)
+    most_relevant_document_sections = order_document_sections_by_query_similarity(search, context_embeddings, num_results, similarity_threshold=0.8)
 
 
     chosen_sections = []
-    chosen_sections_len = 300
+    chosen_sections_len = 0
     chosen_sections_indexes = []
 
     for _, section_index in most_relevant_document_sections:
