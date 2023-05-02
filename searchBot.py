@@ -70,14 +70,17 @@ def construct_prompt(search: str, context_embeddings: dict, df: pd.DataFrame, nu
 
     most_relevant_document_sections = order_document_sections_by_query_similarity(search, context_embeddings, num_results, similarity_threshold=0.8)
 
-
     chosen_sections = []
     chosen_sections_len = 0
     chosen_sections_indexes = []
 
     for _, section_index in most_relevant_document_sections:
         document_section = df.loc[section_index]
-        section_length = len(document_section.description.split())
+        if isinstance(document_section.description, str):
+            section_text = document_section.description
+        else:
+            section_text = document_section['description']
+        section_length = len(section_text.split())
         if section_length < MIN_SECTION_LEN:
             continue
         chosen_sections_len += section_length + separator_len
@@ -85,10 +88,11 @@ def construct_prompt(search: str, context_embeddings: dict, df: pd.DataFrame, nu
         if chosen_sections_len > MAX_SECTION_LEN:
             break
                 
-        chosen_sections.append(document_section.description.replace("\n", " "))
+        chosen_sections.append(section_text.replace("\n", " "))
         chosen_sections_indexes.append(str(section_index))
     
     return "\n".join(chosen_sections)
+
 
 def answer_query_with_context(
     query: str,
