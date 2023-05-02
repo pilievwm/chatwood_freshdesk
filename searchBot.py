@@ -76,15 +76,14 @@ def construct_prompt(search: str, context_embeddings: dict, df: pd.DataFrame, nu
 
     for _, section_index in most_relevant_document_sections:
         document_section = df.loc[section_index]
-        if isinstance(document_section.description, str):
-            section_text = document_section.description
-        else:
-            section_text = document_section['description']
+        if isinstance(document_section, pd.DataFrame):
+            document_section = document_section.iloc[0]
+        section_text = document_section['description']
         section_length = len(section_text.split())
         if section_length < MIN_SECTION_LEN:
             continue
         chosen_sections_len += section_length + separator_len
-        print(document_section)
+
         if chosen_sections_len > MAX_SECTION_LEN:
             break
                 
@@ -92,6 +91,8 @@ def construct_prompt(search: str, context_embeddings: dict, df: pd.DataFrame, nu
         chosen_sections_indexes.append(str(section_index))
     
     return "\n".join(chosen_sections)
+
+
 
 
 def answer_query_with_context(
