@@ -2,7 +2,7 @@ import os
 import re
 import time
 import requests
-from flask import current_app, jsonify
+from flask import current_app, Flask, jsonify
 from chatHelpers import *
 from viber_msg import *
 from gpt import (
@@ -10,8 +10,10 @@ from gpt import (
     analyze_response, 
     process_analyzer_response, 
     wipe_user_chat_history)
+from flask_socketio import SocketIO
 
-
+app = Flask(__name__)
+socketio = SocketIO(app, async_mode='threading')
 
 # Constants
 CHAT_API_ACCESS_TOKEN = os.environ['CHAT_API_ACCESS_TOKEN']
@@ -26,8 +28,26 @@ MAX_SEARCH_RESULTS = 3
 
 # Global variable to store the last message for each user
 last_messages = {}
+continue_checking = {}
 message_timestamps = {}
 message_counters = {}
+
+def async_main():
+    process_viber_request
+
+def should_trigger_event(user_id, interval=30):
+    while continue_checking.get(user_id, False):
+        current_time = time.time()
+        last_message_time = last_message_timestamps.get(user_id)
+
+        if last_message_time and current_time - last_message_time >= interval:
+            stop_viber_typing_status()
+            print("async sent request to stop typing")
+            break  # Exit the loop once the condition is met
+
+        time.sleep(1)  # Sleep for 1 second before checking again
+
+
 
 def send_pricing_plan_message(user_id, contact_name, pricing_plan, delay=None):
     message_text = f"{contact_name}, за съжаление Вашият абонаментен план *{pricing_plan}* не включва чат поддръжка. \n\nТук можете да се запознаете с цените на нашите абонаментни планове:"
@@ -227,13 +247,15 @@ def process_viber_request(request_data, app):
                             send_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
                         
                         ####### When user decide to talk with Technical assistant support team ######
-                        elif action_body == "Имам въпрос свързан с работата на платформата" or bot_conversation == "Yes":
+                        elif action_body == "Имам въпрос свързан с работата на платформата" or action_body == "Имам още въпроси по темата" or bot_conversation == "Yes":
                             print(f"Case 4 {action_body} - Bot conv: {bot_conversation}")
                             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN, bot_conversation="Yes")
-
-                            if owner_ta_id is not None:
+                            if action_body == "Имам още въпроси по темата":
+                                send_viber_message(user_id, message_text="Моля, продължете с въпросите по темата...", sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+                            elif owner_ta_id is not None:
                                 # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
                                 send_viber_typing_status(user_id, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+                                socketio.start_background_task(should_trigger_event, user_id)
                                 from searchDB import answer_db
                                 from searchBot import answer_bot
                                 # search_result = None
@@ -290,6 +312,7 @@ def process_viber_request(request_data, app):
                     # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
                     print(f"Step 2 - Plan: {pricing_plan}")
                     send_viber_typing_status(user_id, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+                    socketio.start_background_task(should_trigger_event, user_id)
                     from searchBot import answer_db
                     from searchBot import answer_bot
                     search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
@@ -348,3 +371,5 @@ def process_viber_request(request_data, app):
 
         with app.app_context():
             return jsonify({'status': 'ignored'})
+if __name__ == "__main__":
+    socketio.run(app)
