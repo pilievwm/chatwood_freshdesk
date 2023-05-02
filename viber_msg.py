@@ -1,6 +1,9 @@
 import requests
 import os
+import time
 from flask import jsonify, make_response
+
+
 
 # Constants
 CHAT_API_ACCESS_TOKEN = os.environ['CHAT_API_ACCESS_TOKEN']
@@ -112,9 +115,9 @@ def send_viber_typing_status(user_id, sender_name=None, sender_avatar=None):
 
         if sender_avatar:
                 send_message_payload["sender"]["avatar"] = sender_avatar
-
+    
     headers = get_headers(viber_auth_token=X_VIBER_AUTH_TOKEN)
-
+    last_message_timestamps[user_id] = time.time()
     response = requests.post(send_message_url, json=send_message_payload, headers=headers)
     return response.status_code, response.text
 
