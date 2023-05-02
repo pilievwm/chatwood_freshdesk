@@ -252,6 +252,8 @@ def process_viber_request(request_data, app):
                             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN, bot_conversation="Yes")
                             if action_body == "Имам още въпроси по темата":
                                 send_viber_message(user_id, message_text="Моля, продължете с въпросите по темата...", sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
+                            elif action_body == "Имам въпрос свързан с работата на платформата":
+                                send_viber_message(user_id, message_text="Моля, задайте вашия въпрос и ще се постарая да ви помогна с информацията, свързана с работата на платформата CloudCart.", sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
                             elif owner_ta_id is not None:
                                 # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
                                 send_viber_typing_status(user_id, sender_name="CloudCart AI assistant", sender_avatar="https://png.pngtree.com/png-clipart/20190419/ourmid/pngtree-rainbow-unicorn-image-png-image_959412.jpg")
