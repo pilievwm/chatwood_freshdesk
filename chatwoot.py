@@ -1,14 +1,17 @@
 from viber_msg import *
 from flask import jsonify
 from main import update_contact_bot_conversation, create_or_get_latest_conversation
-from chatHelpers import chat_message_send
+from chatHelpers import get_slack_users, get_latest_conversation
 
 def process_chatwoot_payload(payload):
     event = payload.get('event')
-    
+    print(payload)
     conversation_status = payload.get("status")
-    user_id = payload.get('meta', {}).get('sender', {}).get('custom_attributes', {}).get('viberid')
+    owner_email = payload.get('meta', {}).get('sender', {}).get('custom_attributes', {}).get('owner_email')
+    user_id = payload.get('meta', {}).get('sender', {}).get('custom_attributes', {}).get('viberid')    
     contact_id = payload.get('meta', {}).get('sender', {}).get('id', {})
+
+
     # Get the JSON payload from the request
 
     
@@ -20,9 +23,14 @@ def process_chatwoot_payload(payload):
         else:
             conversation_status == "open"
             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="Human")
-
+            inbox_id = "14"
+            latest_conversation = get_latest_conversation(contact_id, inbox_id, CHAT_API_ACCESS_TOKEN)
+            assignee_email = latest_conversation['meta']['assignee']['email']
+            get_slack_users(assignee_email, latest_conversation['id'])
+                        
     elif event == "conversation_updated" and conversation_status == "open":
         changed_attributes = payload.get('changed_attributes', [])
+        print(f"Here: {changed_attributes}")
         for attr in changed_attributes:
             if 'assignee_id' in attr:
                 previous_value = attr['assignee_id']['previous_value']
@@ -32,7 +40,9 @@ def process_chatwoot_payload(payload):
                     assignee = payload.get('meta', {}).get('assignee')
                     if assignee:
                         new_assignee = assignee.get('name')
+
                         send_viber_message(user_id, f"_info: Вашият чат беше пренасочен към {new_assignee}_")
+
 
     messages = payload.get('conversation', {}).get('messages', [])
 

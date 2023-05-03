@@ -1,5 +1,6 @@
 import requests
 import os
+import json
 from team import get_availability, get_team_structure
 from gpt import user_chat_histories
 
@@ -8,6 +9,7 @@ CHAT_API_ACCESS_TOKEN = os.environ['CHAT_API_ACCESS_TOKEN']
 VIBER_API_URL = os.environ['VIBER_API_URL']
 X_VIBER_AUTH_TOKEN = os.environ['X_VIBER_AUTH_TOKEN']
 CHAT_API_URL = os.environ['CHAT_API_URL']
+SLACK_TOKEN = os.environ['SLACK_TOKEN']
 
 def get_headers(api_access_token=None, viber_auth_token=None):
     headers = {"Content-Type": "application/json"}
@@ -236,3 +238,73 @@ def get_user_id_by_email(email, api_access_token):
         return user_data['payload'][0]['id']
     else:
         return None
+    
+def get_slack_users(assignee_email, latest_conversation):
+    # Replace 'your_bot_token' with your bot's OAuth access token
+
+    headers = {
+        'Authorization': f'Bearer {SLACK_TOKEN}',
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+
+    params = {
+        'email': assignee_email
+    }
+
+    response = requests.get('https://slack.com/api/users.lookupByEmail', headers=headers, params=params)
+
+    # Check if the API request was successful
+    if response.status_code == 200:
+        data = response.json()
+
+        if data['ok']:
+            slack_userName = data['user']['name']
+            slack_userId = data['user']['id']
+            send_slack_message(slack_userName, slack_userId, latest_conversation)
+            return slack_userName, slack_userId
+            
+        else:
+            print(f"Error: {data['error']}")
+            return None
+    else:
+        print(f"Request failed with status code: {response.status_code}")
+        return None
+    
+
+def send_slack_message(slack_userName, slack_userId, latest_conversation):
+    print(f"Sending slack, {slack_userName}, {slack_userId}")
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    payload = {
+        "channel": f"@{slack_userName}",
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*<@{slack_userId}>, Имаш нов/отворен чат :loud_sound:*"
+                }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Към чата",
+                            "emoji": True
+                        },
+                        
+                        "url": f"https://chat.cloudcart.com/app/accounts/1/inbox/14/conversations/{latest_conversation}",
+                        
+                        "action_id": "button-action"
+                    }
+                ]
+            }
+        ]
+    }
+    response = requests.post('https://hooks.slack.com/services/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', headers=headers, data=json.dumps(payload))
+
+    return response
