@@ -369,7 +369,6 @@ def get_cloudcart_user_info(user_email):
         return {}
 
     data = response.json()
-    print(f"API response: {data}")
 
     if not isinstance(data, dict):
         print(f"Error: Unexpected API response, expected a dictionary but got {type(data)}")

@@ -28,6 +28,7 @@ def handle_login_user(request):
     owner_phone = webhook_data['data']['site']['user']['cc_user']['phone']
     plan = webhook_data['data']['site']['plan']
     freshdesk_company_id = webhook_data['data']['site']['freshdesk_id']
+    print(contact_domain)
 
     status_mapping = {
         0: 'Canceled',
