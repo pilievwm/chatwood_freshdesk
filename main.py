@@ -282,7 +282,7 @@ def process_viber_request(request_data, app):
                             toggle_conversation(latest_conversation, CHAT_API_ACCESS_TOKEN)     
                         else:
                             send_personalized_viber_message(user_id, contact_name)
-                            update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
+                            # update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
                             #print(f"ELSE Case 7 {action_body} - Bot conv: {bot_conversation}")
             
             
@@ -378,7 +378,7 @@ def process_viber_request(request_data, app):
                             print("Welcome user with selection, Plan: No Valid!")
                             update_contact_viber_id(contact_id, user_id, CHAT_API_ACCESS_TOKEN)
                             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="No")
-                            update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
+                            #update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
                             
 
                         # If the pricing plan is valid
@@ -389,7 +389,7 @@ def process_viber_request(request_data, app):
                             # Update contact's Viber ID and bot conversation status
                             update_contact_viber_id(contact_id, user_id, CHAT_API_ACCESS_TOKEN)
                             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="No")
-                            update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
+                            #update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
 
                     # If no contact is found
                     else:
