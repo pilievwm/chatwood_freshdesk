@@ -144,7 +144,7 @@ def toggle_conversation(latest_conversation, api_access_token):
     }
     # Update conversation status
     response = requests.post(toggle_url, json=payload, headers=headers)
-
+    # print(response)
     return response
 
 
@@ -361,6 +361,19 @@ def get_cloudcart_user_info(user_email):
         'email': user_email
     }
     response = requests.get('https://console.cloudcart.com/webhooks/lead', headers=headers, params=params)
+    
+    if response.status_code != 200:
+        print(f"Error: API request failed with status code {response.status_code}")
+        return {}
+
     data = response.json()
+    print(f"API response: {data}")
+
+    if not isinstance(data, dict):
+        print(f"Error: Unexpected API response, expected a dictionary but got {type(data)}")
+        return {}
+
     return data
+
+
         

@@ -138,7 +138,7 @@ def process_viber_request(request_data, app):
                     message_text = data['message']['text']
                     # Check if the message is equal to the previous one
                     with last_messages_lock:
-                        if (user_id in last_messages and message_text == last_messages[user_id] and (user_id in last_messages and message_text != "Да, клиент съм" or user_id in last_messages and message_text != "Не, но искам да стана клиент")):
+                        if (user_id in last_messages and message_text == last_messages[user_id] and (user_id in last_messages and message_text != "Да, клиент съм" or user_id in last_messages and message_text != "Не, но искам да стана клиент" or user_id in last_messages and message_text != "Прекрати чат сесията")):
                             #print(last_messages)
                             return jsonify({'status': 'message_skipped'}), 200
                         else:
@@ -165,7 +165,7 @@ def process_viber_request(request_data, app):
         if response_data['payload']:
             contact = response_data['payload'][0]
             pricing_plan = contact['custom_attributes'].get('pricingPlan')
-            owner_email = contact['custom_attributes']['owner_email']
+            #owner_email = contact['custom_attributes']['owner_email']
             latest_conversation = None
             
             
@@ -193,6 +193,7 @@ def process_viber_request(request_data, app):
                 owner_ta_name = None
                 owner_id, owner_name, owner_status, owner_ta_name, owner_ta_id, owner_ta_status = get_owner_by_email(owner_email)
                 latest_conversation = create_or_get_latest_conversation(contact_id, inbox_id, owner_id, CHAT_API_ACCESS_TOKEN)
+                toggle_conversation(latest_conversation, CHAT_API_ACCESS_TOKEN)
                 #print(f"Owner ID: {owner_id}")
                 #print("check completed!")
                 for _ in range(1):  
@@ -282,13 +283,13 @@ def process_viber_request(request_data, app):
                         
                         # User intent to close chat session
                         elif action_body == "Прекрати чат сесията" and bot_conversation == "Human":
-                            #print(f"Case 6 {action_body} - Bot conv: {bot_conversation}")
+                            print(f"Case 6 {action_body} - Bot conv: {bot_conversation}")
                             chat_message_send(message_text=f"The chat was closed by the customer: {contact_name}", latest_conversation=latest_conversation, private_msg=True, type="outgoing")
                             toggle_conversation(latest_conversation, CHAT_API_ACCESS_TOKEN)     
                         else:
                             send_personalized_viber_message(user_id, contact_name)
                             # update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
-                            #print(f"ELSE Case 7 {action_body} - Bot conv: {bot_conversation}")
+                            print(f"ELSE Case 7 {action_body} - Bot conv: {bot_conversation}")
             
             
             ###################################### ELSE PLAN IS NOT VALID ###########################################
@@ -369,7 +370,9 @@ def process_viber_request(request_data, app):
                         
                         #Get data from Console CloudCart
                         cc_data = get_cloudcart_user_info(contact_email)
-                        if cc_data.get('cc_user'):
+                        cc_data_get = cc_data.get('cc_user')
+                        print(cc_data_get)
+                        if cc_data_get is not None:
                             owner_email = cc_data['cc_user'].get('email')
                             owner_name = cc_data['cc_user'].get('name')
                         else:
@@ -390,7 +393,7 @@ def process_viber_request(request_data, app):
                         else:
                             # Send a personalized message to the user and update the contact's Viber ID and bot conversation status
                             send_personalized_viber_message(user_id, contact_name)
-                            # print("Welcome user with selection, Plan: VALID!")
+                            print("Welcome user with selection, Plan: VALID!")
                             # Update contact's Viber ID and bot conversation status
                             update_contact_viber_id(contact_id, user_id, CHAT_API_ACCESS_TOKEN)
                             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="No")
