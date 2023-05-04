@@ -55,7 +55,7 @@ def talk_to_ta(user_id, latest_conversation, owner_ta_status, owner_ta_name, own
 
         else:
             first_name = owner_ta_name.split(' ')[0]
-            send_viber_message(user_id, f"Свързах Ви в чат сесия с {owner_ta_name}. Тъй като той не е на разположение в момента, моля, оставете своето съобщение тук. \n\n{first_name} ще се свърже с Вас, веднага щом бъде на линия. \n\nБлагодарим за търпението!")
+            send_viber_message(user_id, f"Свързах Ви в чат сесия с {owner_ta_name}. Тъй като не е на разположение в момента, моля, оставете своето съобщение тук. \n\n{first_name} ще се свърже с Вас, веднага щом бъде на линия. \n\nБлагодарим за търпението!")
             #print("TA Offline")
             assignee_id = owner_ta_id
             assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
@@ -73,7 +73,7 @@ def talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name,
             assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
         else:
             first_name = owner_name.split(' ')[0]
-            send_viber_message(user_id, message_text=f"Свързах Ви в чат сесия с {owner_name}. Тъй като той не е на разположение в момента, моля, оставете своето съобщение тук. \n\n{first_name} ще се свърже с Вас, веднага щом бъде на линия. \n\nБлагодарим за търпението!")
+            send_viber_message(user_id, message_text=f"Свързах Ви в чат сесия с {owner_name}. Тъй като не е на разположение в момента, моля, оставете своето съобщение тук. \n\n{first_name} ще се свърже с Вас, веднага щом бъде на линия. \n\nБлагодарим за търпението!")
             #print("AM Offline")
             assignee_id = owner_id
             assign_conversation(latest_conversation['id'], assignee_id, CHAT_API_ACCESS_TOKEN)
