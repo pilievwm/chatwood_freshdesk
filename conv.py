@@ -81,7 +81,8 @@ def handle_ticket_info(request):
 
         open_and_pending_tickets = []
         for ticket in tickets:
-            if ticket['status'] in [2, 3]:
+            
+            if (ticket['status'] in [2, 3]) and (ticket['group_id'] == 77000011310):
                 open_and_pending_tickets.append(ticket)
 
         if open_and_pending_tickets:

@@ -137,12 +137,12 @@ def process_viber_request(request_data, app):
                 if message_type == 'text':
                     message_text = data['message']['text']
                     # Check if the message is equal to the previous one
-                    with last_messages_lock:
-                        if (user_id in last_messages and message_text == last_messages[user_id] and (user_id in last_messages and message_text != "Да, клиент съм" or user_id in last_messages and message_text != "Не, но искам да стана клиент" or user_id in last_messages and message_text != "Прекрати чат сесията")):
+                    #with last_messages_lock:
+                    #    if (user_id in last_messages and message_text == last_messages[user_id] and (user_id in last_messages and message_text != "Да, клиент съм") or (user_id in last_messages and message_text != "Не, но искам да стана клиент") or (user_id in last_messages and message_text != "Прекрати чат сесията") or (user_id in last_messages and message_text != "Искам да се свържа с моя акаунт мениджър")):
                             #print(last_messages)
-                            return jsonify({'status': 'message_skipped'}), 200
-                        else:
-                            last_messages[user_id] = message_text
+                    #        return jsonify({'status': 'message_skipped'}), 200
+                    #    else:
+                    #        last_messages[user_id] = message_text
 
                 elif message_type == 'picture' or message_type == 'video':
                     message_media_url = data['message']['media']
@@ -278,7 +278,7 @@ def process_viber_request(request_data, app):
 
                         # Continues conversation with agent                
                         elif bot_conversation == "Human" and not action_body == "Прекрати чат сесията":
-                            #print(f"Case 5 {action_body} - Bot conv: {bot_conversation}")
+                            print(f"Case 5 {action_body} - Bot conv: {bot_conversation}")
                             chat_message_send(message_text, latest_conversation, False, type="incoming")
                         
                         # User intent to close chat session
@@ -290,7 +290,8 @@ def process_viber_request(request_data, app):
                             send_personalized_viber_message(user_id, contact_name)
                             # update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
                             print(f"ELSE Case 7 {action_body} - Bot conv: {bot_conversation}")
-            
+                    else:
+                        print('Here no were')
             
             ###################################### ELSE PLAN IS NOT VALID ###########################################
             
