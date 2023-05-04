@@ -67,17 +67,45 @@ def update_contact_bot_conversation(contact_id, api_access_token, bot_conversati
 
     requests.put(update_contact_url, json=update_contact_payload, headers=headers)
 
-def update_contact_owner(contact_id, api_access_token, owner_email, owner_name):
-    update_contact_url = f"{CHAT_API_URL}/contacts/{contact_id}"
+def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar):
+    update_contact = f"{CHAT_API_URL}/contacts/{contact_id}"
     update_contact_payload = {
         "custom_attributes": {
+            "role": owner_email,
+            "owner": owner_name,
             "owner_email": owner_email,
-            "owner": owner_name
+            "owner_phone": owner_phone,
+            "pricingPlan": plan,
+            "owenr_avatar": owenr_avatar
+        }
+    }
+    headers = get_headers(api_access_token=api_access_token)
+    response = requests.put(update_contact, json=update_contact_payload, headers=headers)
+    print(response)
+    return response.json()
+
+def create_contact_owner(cc_contact_id, contact_name, contact_email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar):
+    create_contact = f"{CHAT_API_URL}/contacts"
+    create_contact_payload = {
+        "inbox_id": 14,
+        "name": contact_name,
+        "email": contact_email,
+        "phone_number": contact_phone,
+        "identifier": cc_contact_id,
+        "custom_attributes": {
+            "role": owner_email,
+            "owner": owner_name,
+            "owner_email": owner_email,
+            "owner_phone": owner_phone,
+            "pricingPlan": plan,
+            "owenr_avatar": owenr_avatar
         }
     }
     headers = get_headers(api_access_token=api_access_token)
 
-    requests.put(update_contact_url, json=update_contact_payload, headers=headers)
+    response = requests.post(create_contact, json=create_contact_payload, headers=headers)
+    
+    return response.json()
 
 def create_conversation(contact_id, inbox_id, owner_id, api_access_token):
     create_conversation_url = f"{CHAT_API_URL}/conversations"
@@ -184,6 +212,7 @@ def email_contact_search(message_text, api_access_token):
 
     response = requests.post(email_contact_search_url, json=email_contact_search_payload, headers=headers)
     return response.json()
+
 
 def handle_team_availability(email, team_structure):
     if email in team_structure:

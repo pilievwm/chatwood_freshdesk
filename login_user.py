@@ -5,19 +5,26 @@ It extracts relevant data from the webhook payload and updates Freshdesk contact
 import os
 import requests
 from dotenv import load_dotenv
+from chatHelpers import email_contact_search, create_contact_owner, update_contact_owner
+from flask import jsonify
 
 load_dotenv()
 
 FRESHDESK_API_KEY = os.getenv('FRESHDESK_API_KEY')
 FRESHDESK_API_URL = os.getenv('FRESHDESK_API_URL')
-
+CHAT_API_ACCESS_TOKEN = os.environ['CHAT_API_ACCESS_TOKEN']
+CHAT_API_URL = os.environ['CHAT_API_URL']
 
 def handle_login_user(request):
     webhook_data = request.get_json()
     email = webhook_data['data']['admin']['email']
+    cc_contact_id = webhook_data['data']['user']['unique_id']
+    contact_name = webhook_data['data']['admin']['name']
+    contact_phone = webhook_data['data']['admin']['phone_number']
     owner_name = webhook_data['data']['site']['user']['cc_user']['name']
     owner_email = webhook_data['data']['site']['user']['cc_user']['email']
-    status = webhook_data['data']['site']['status']
+    owenr_avatar = webhook_data['data']['site']['user']['cc_user']['avatar']
+    owner_phone = webhook_data['data']['site']['user']['cc_user']['phone']
     plan = webhook_data['data']['site']['plan']
     freshdesk_company_id = webhook_data['data']['site']['freshdesk_id']
 
@@ -35,15 +42,30 @@ def handle_login_user(request):
     freshdesk_contact = get_freshdesk_contact_by_email(email)
     if freshdesk_contact is not None:
         freshdesk_id = freshdesk_contact['id']
+
         update_contact_result = update_freshdesk_contact(freshdesk_id, owner_name, owner_email)
+        update_company_result = update_freshdesk_company(freshdesk_company_id, plan, status_text)
     else:
         update_contact_result = 'Error: Freshdesk contact not found by email'
 
-    update_contact_result, freshdesk_contact_id = update_freshdesk_contact(freshdesk_id, owner_name, owner_email)
-    update_company_result, freshdesk_updated_company_id = update_freshdesk_company(freshdesk_company_id, plan, status_text)
 
-    return f'Contact update result: {update_contact_result} (ID: {freshdesk_contact_id}, Email: {email})\nCompany update result: {update_company_result} (ID: {freshdesk_updated_company_id})'
+    chatwoot_contact = email_contact_search(email, CHAT_API_ACCESS_TOKEN)
+    print(chatwoot_contact)
+    if chatwoot_contact['payload']:
+        
+        contact = chatwoot_contact['payload'][0]
+        contact_id = contact['id']
+        api_access_token = CHAT_API_ACCESS_TOKEN
+        update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar)
+    else:
 
+        print(cc_contact_id)
+        api_access_token = CHAT_API_ACCESS_TOKEN
+        create_contact_owner(cc_contact_id, contact_name, email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar)
+        
+
+    response_message = "OK"
+    return jsonify({'message': response_message})
 
 
 def get_freshdesk_contact_by_email(email):
