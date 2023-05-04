@@ -103,7 +103,7 @@ def send_viber_typing_status(user_id, sender_name=None, sender_avatar=None):
                     "Rows": 1,
                     "BgColor": "#eee3ff",
                     "BgMediaType": "gif",
-                    "BgMedia": "https://cdn.dribbble.com/users/1152773/screenshots/3832732/loader2.gif",
+                    "BgMedia": "https://cdncloudcart.com/storage/loader2.gif",
                     "BgLoop": True,
                     "ActionType": "none",
                     "ActionBody": "...",

@@ -10,6 +10,7 @@ VIBER_API_URL = os.environ['VIBER_API_URL']
 X_VIBER_AUTH_TOKEN = os.environ['X_VIBER_AUTH_TOKEN']
 CHAT_API_URL = os.environ['CHAT_API_URL']
 SLACK_TOKEN = os.environ['SLACK_TOKEN']
+CCCONSOLE_API_TOKEN = os.environ['CCCONSOLE_API_TOKEN']
 
 def get_headers(api_access_token=None, viber_auth_token=None):
     headers = {"Content-Type": "application/json"}
@@ -66,11 +67,24 @@ def update_contact_bot_conversation(contact_id, api_access_token, bot_conversati
 
     requests.put(update_contact_url, json=update_contact_payload, headers=headers)
 
-def create_conversation(contact_id, inbox_id, api_access_token):
+def update_contact_owner(contact_id, api_access_token, owner_email, owner_name):
+    update_contact_url = f"{CHAT_API_URL}/contacts/{contact_id}"
+    update_contact_payload = {
+        "custom_attributes": {
+            "owner_email": owner_email,
+            "owner": owner_name
+        }
+    }
+    headers = get_headers(api_access_token=api_access_token)
+
+    requests.put(update_contact_url, json=update_contact_payload, headers=headers)
+
+def create_conversation(contact_id, inbox_id, owner_id, api_access_token):
     create_conversation_url = f"{CHAT_API_URL}/conversations"
     create_conversation_payload = {
         "contact_id": contact_id,
-        "inbox_id": inbox_id
+        "inbox_id": inbox_id,
+        "assignee_id": owner_id
     }
 
     headers = {
@@ -308,3 +322,16 @@ def send_slack_message(slack_userName, slack_userId, latest_conversation):
     response = requests.post('https://hooks.slack.com/services/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', headers=headers, data=json.dumps(payload))
 
     return response
+
+def get_cloudcart_user_info(user_email):
+    headers = {
+        'Content-Type': 'application/json',
+        'Webhook-Api-Key': CCCONSOLE_API_TOKEN
+    }
+    params = {
+        'email': user_email
+    }
+    response = requests.get('https://console.cloudcart.com/webhooks/lead', headers=headers, params=params)
+    data = response.json()
+    return data
+        

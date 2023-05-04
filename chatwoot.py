@@ -17,10 +17,12 @@ def process_chatwoot_payload(payload):
     if event == "conversation_status_changed":
         if conversation_status != "open":
             initiate_new_viber_message(user_id, message_text=f"_info: Чат сесията е затворена. Благодарим ви!_")
+            print("Session close")
             # Update customer attribute Bot conversation to Human
             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="No")
         else:
             conversation_status == "open"
+            print("Session open")
             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="Human")
             inbox_id = "14"
             latest_conversation = get_latest_conversation(contact_id, inbox_id, CHAT_API_ACCESS_TOKEN)
