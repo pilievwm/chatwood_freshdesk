@@ -25,7 +25,7 @@ def get_team_structure():
 
     return team_structure
 
-def get_availability(email, chat_api_access_token, chat_api_url):
+def get_availability(email, CHAT_API_ACCESS_TOKEN, chat_api_url):
     headers = {'api_access_token': CHAT_API_ACCESS_TOKEN}
 
     agents_url = f'{chat_api_url}/agents'

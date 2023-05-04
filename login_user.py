@@ -50,7 +50,6 @@ def handle_login_user(request):
 
 
     chatwoot_contact = email_contact_search(email, CHAT_API_ACCESS_TOKEN)
-    print(chatwoot_contact)
     if chatwoot_contact['payload']:
         
         contact = chatwoot_contact['payload'][0]
@@ -59,7 +58,6 @@ def handle_login_user(request):
         update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar)
     else:
 
-        print(cc_contact_id)
         api_access_token = CHAT_API_ACCESS_TOKEN
         create_contact_owner(cc_contact_id, contact_name, email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar)
         

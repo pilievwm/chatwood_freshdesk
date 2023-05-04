@@ -188,7 +188,7 @@ def process_viber_request(request_data, app):
                 # Get or create the conversation
                 owner_id, owner_name, owner_status, owner_ta_name, owner_ta_id, owner_ta_status = get_owner_by_email(owner_email)
                 latest_conversation = create_or_get_latest_conversation(contact_id, inbox_id, owner_id, CHAT_API_ACCESS_TOKEN)
-                print(f"Owner ID: {owner_id}")
+                #print(f"Owner ID: {owner_id}")
                 #print("check completed!")
                 for _ in range(1):  
                     #print("enter the loop")
