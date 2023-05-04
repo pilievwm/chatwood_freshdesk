@@ -67,9 +67,10 @@ def update_contact_bot_conversation(contact_id, api_access_token, bot_conversati
 
     requests.put(update_contact_url, json=update_contact_payload, headers=headers)
 
-def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar):
+def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar, contact_domain):
     update_contact = f"{CHAT_API_URL}/contacts/{contact_id}"
     update_contact_payload = {
+        "company_name": contact_domain,
         "custom_attributes": {
             "role": owner_email,
             "owner": owner_name,
@@ -84,7 +85,7 @@ def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, 
     # print(response)
     return response.json()
 
-def create_contact_owner(cc_contact_id, contact_name, contact_email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar):
+def create_contact_owner(cc_contact_id, contact_name, contact_email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar, contact_domain):
     create_contact = f"{CHAT_API_URL}/contacts"
     create_contact_payload = {
         "inbox_id": 14,
@@ -92,6 +93,7 @@ def create_contact_owner(cc_contact_id, contact_name, contact_email, contact_pho
         "email": contact_email,
         "phone_number": contact_phone,
         "identifier": cc_contact_id,
+        "company_name": contact_domain,
         "custom_attributes": {
             "role": owner_email,
             "owner": owner_name,

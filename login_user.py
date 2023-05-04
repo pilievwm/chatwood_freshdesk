@@ -21,6 +21,7 @@ def handle_login_user(request):
     cc_contact_id = webhook_data['data']['user']['unique_id']
     contact_name = webhook_data['data']['admin']['name']
     contact_phone = webhook_data['data']['admin']['phone_number']
+    contact_domain = webhook_data['data']['site']['url']
     owner_name = webhook_data['data']['site']['user']['cc_user']['name']
     owner_email = webhook_data['data']['site']['user']['cc_user']['email']
     owenr_avatar = webhook_data['data']['site']['user']['cc_user']['avatar']
@@ -55,11 +56,11 @@ def handle_login_user(request):
         contact = chatwoot_contact['payload'][0]
         contact_id = contact['id']
         api_access_token = CHAT_API_ACCESS_TOKEN
-        update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar)
+        update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar, contact_domain)
     else:
 
         api_access_token = CHAT_API_ACCESS_TOKEN
-        create_contact_owner(cc_contact_id, contact_name, email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar)
+        create_contact_owner(cc_contact_id, contact_name, email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar, contact_domain)
         
 
     response_message = "OK"

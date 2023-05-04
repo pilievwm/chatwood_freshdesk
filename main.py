@@ -366,15 +366,17 @@ def process_viber_request(request_data, app):
                         contact_id = contact['id']
                         contact_name = contact['name']
                         contact_email = contact['email']
+                        
                         pricing_plan = contact['custom_attributes'].get('pricingPlan')
                         
                         #Get data from Console CloudCart
                         cc_data = get_cloudcart_user_info(contact_email)
                         cc_data_get = cc_data.get('cc_user')
-                        print(cc_data_get)
+                        
                         if cc_data_get is not None:
                             owner_email = cc_data['cc_user'].get('email')
                             owner_name = cc_data['cc_user'].get('name')
+                            contact_domain = cc_data['cc_user'].get('domain')
                         else:
                             owner_email = None
                             owner_name = None
