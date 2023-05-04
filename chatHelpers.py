@@ -81,7 +81,7 @@ def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, 
     }
     headers = get_headers(api_access_token=api_access_token)
     response = requests.put(update_contact, json=update_contact_payload, headers=headers)
-    print(response)
+    # print(response)
     return response.json()
 
 def create_contact_owner(cc_contact_id, contact_name, contact_email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar):

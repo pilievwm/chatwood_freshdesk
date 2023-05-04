@@ -46,6 +46,7 @@ def should_trigger_event(user_id, interval=30):
 
 
 def talk_to_ta(user_id, latest_conversation, owner_ta_status, owner_ta_name, owner_ta_id, message_text):
+    
     if owner_ta_id is not None:
         if owner_ta_status == "online":
             send_viber_message(user_id, f"Свързвам ви с технически асистент {owner_ta_name}. \n\nМоля, изчакайте.")
@@ -64,7 +65,7 @@ def talk_to_ta(user_id, latest_conversation, owner_ta_status, owner_ta_name, own
         print(f"Failed to find user with email {owner_ta_name}.")
 
 
-def talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name, message_text, owner_email):
+def talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name, message_text):
     if owner_id is not None:
         if owner_status == "online":
             send_viber_message(user_id, message_text=f"Разговорът е насочен към Вашия акаунт мениджър {owner_name}. \n\nМоля, изчакайте!")
@@ -79,7 +80,6 @@ def talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name,
             #print("AM Offline")
             initiate_close_chat_viber_message(user_id, message_text=" ")
 
-            
     else:
         print(f"Failed to find user with email {owner_name}.")
 
@@ -99,7 +99,6 @@ def process_viber_request(request_data, app):
             return '', 200
 
         if event == "conversation_started":
-            print(2)
             user_key = 'user'
             visitor_name = data[user_key]['name']
             welcome_message = send_welcome_message(visitor_name)
@@ -186,6 +185,12 @@ def process_viber_request(request_data, app):
                 assignee_id = None  # Initialize assignee_id    
                 
                 # Get or create the conversation
+                owner_id = None
+                owner_ta_id = None
+                owner_status = None
+                owner_ta_status = None
+                owner_name = None
+                owner_ta_name = None
                 owner_id, owner_name, owner_status, owner_ta_name, owner_ta_id, owner_ta_status = get_owner_by_email(owner_email)
                 latest_conversation = create_or_get_latest_conversation(contact_id, inbox_id, owner_id, CHAT_API_ACCESS_TOKEN)
                 #print(f"Owner ID: {owner_id}")
@@ -197,10 +202,10 @@ def process_viber_request(request_data, app):
                         #print("check pricing plans")
                         ####### When user decide to talk with AM from the viber message ######
                         if (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation is None) or (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation == "No") or (action_body == "Искам да се свържа с моя акаунт мениджър" and bot_conversation == "Yes"):
-                            print(f"Case 1 {action_body} - Bot conv: {bot_conversation}")
+                            # print(f"Case 1 {action_body} - Bot conv: {bot_conversation}")
                             if owner_id is not None:
                                 #print("Case 1 has owner ID")
-                                talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name, message_text, owner_email)
+                                talk_to_am(user_id, latest_conversation, owner_id, owner_status, owner_name, message_text)
                                 chat_message_send(message_text, latest_conversation, False, type="incoming")
                                 
                                 if combined_text is not None:
@@ -292,7 +297,7 @@ def process_viber_request(request_data, app):
                 contact = response_data['payload'][0]
                 contact_name = contact['name']
                 pricing_plan = contact['custom_attributes'].get('pricingPlan')
-                print(f"Else case 1 {action_body} - Bot conv: {bot_conversation}")
+                # print(f"Else case 1 {action_body} - Bot conv: {bot_conversation}")
                 if "Искам да се свържа с моя акаунт мениджър" in message_text or "Искам да се свържа с техническия екип" in message_text:
                     message_text = "С кого разговарям?"
                 if message_text == "Имам въпрос на различна тематика":
@@ -303,27 +308,27 @@ def process_viber_request(request_data, app):
                 # Todo: Add external source for controlling the accepted plans
                 if pricing_plan not in ACCEPTED_PLANS:
                     # send_pricing_plan_message(user_id, contact_name, pricing_plan, MESSAGE_DELAY)
-                    print(f"Step 2 - Plan: {pricing_plan}")
+                    # print(f"Step 2 - Plan: {pricing_plan}")
                     send_viber_typing_status(user_id, sender_name="CloudCart AI assistant", sender_avatar="https://cdncloudcart.com/storage/cc_118509.png")
                     socketio.start_background_task(should_trigger_event, user_id)
                     from searchBot import answer_db
                     from searchBot import answer_bot
                     search_result = answer_bot(message_text, num_results=MAX_SEARCH_RESULTS)
-                    print(f"\n\nНамерен резултат: {search_result}\n\n")
+                    # print(f"\n\nНамерен резултат: {search_result}\n\n")
                     gpt_response = generate_response_for_bad_pricing_plans(user_id, search_result, message_text, contact_name)
 
                     # Analyze the response
                     analyzer_response = analyze_response(gpt_response)
-                    print(f"Step 3 - Analized: {analyzer_response}")
+                    # print(f"Step 3 - Analized: {analyzer_response}")
                     # Process the analyzer's response
                     conversation_ended = process_analyzer_response(analyzer_response, user_id)
 
                     # If the conversation has ended, call finalize_ai_conversation_viber_message
                     if conversation_ended:
-                        print(f"Step 4 - Conversation ended: {conversation_ended}")
+                        # print(f"Step 4 - Conversation ended: {conversation_ended}")
                         finalize_ai_conversation_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://cdncloudcart.com/storage/cc_118509.png")
                     else:
-                        print(f"Step 5 - Send viber message")
+                        # print(f"Step 5 - Send viber message")
                         send_viber_message(user_id, gpt_response, sender_name="CloudCart AI assistant", sender_avatar="https://cdncloudcart.com/storage/cc_118509.png")                
         
         
@@ -375,7 +380,7 @@ def process_viber_request(request_data, app):
                         if pricing_plan not in ACCEPTED_PLANS:
                             # Send a message to the user with a greeting and update the contact's Viber ID and bot conversation status
                             send_viber_message(user_id, message_text=f"Здравейте, {contact_name}, разговаряте с CloudCart AI асистент. С какво мога да ви съдействам?", sender_name="CloudCart AI assistant", sender_avatar="https://cdncloudcart.com/storage/cc_118509.png")
-                            print("Welcome user with selection, Plan: No Valid!")
+                            # print("Welcome user with selection, Plan: No Valid!")
                             update_contact_viber_id(contact_id, user_id, CHAT_API_ACCESS_TOKEN)
                             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="No")
                             #update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
@@ -385,7 +390,7 @@ def process_viber_request(request_data, app):
                         else:
                             # Send a personalized message to the user and update the contact's Viber ID and bot conversation status
                             send_personalized_viber_message(user_id, contact_name)
-                            print("Welcome user with selection, Plan: VALID!")
+                            # print("Welcome user with selection, Plan: VALID!")
                             # Update contact's Viber ID and bot conversation status
                             update_contact_viber_id(contact_id, user_id, CHAT_API_ACCESS_TOKEN)
                             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="No")
