@@ -216,7 +216,7 @@ def get_owner_by_email(owner_email):
         return owner_id, owner_name, owner_status, owner_ta_name, owner_ta_id, owner_ta_status
 
     else:
-        print(f"Email not found: {owner_email}")  # Debugging line
+        #print(f"Email not found: {owner_email}")  # Debugging line
         return None, None, None, None, None, None
 
 def get_user_id_by_email(email, api_access_token):
@@ -264,15 +264,15 @@ def get_slack_users(assignee_email, latest_conversation):
             return slack_userName, slack_userId
             
         else:
-            print(f"Error: {data['error']}")
+            # print(f"Error: {data['error']}")
             return None
     else:
-        print(f"Request failed with status code: {response.status_code}")
+        #print(f"Request failed with status code: {response.status_code}")
         return None
     
 
 def send_slack_message(slack_userName, slack_userId, latest_conversation):
-    print(f"Sending slack, {slack_userName}, {slack_userId}")
+    #print(f"Sending slack, {slack_userName}, {slack_userId}")
     headers = {
         'Content-Type': 'application/json'
     }

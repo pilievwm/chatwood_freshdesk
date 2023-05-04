@@ -34,15 +34,15 @@ def send_welcome_message(visitor_name):
                     "Rows": 1,
                     "BgColor": "#eee3ff" # Blue color
                 },
-                {
-                    "ActionType": "reply",
-                    "ActionBody": "Не, но искам да стана клиент",
-                    "Text": "Не, но искам да стана клиент",
-                    "TextSize": "regular",
-                    "Columns": 3, # Change this value as needed
-                    "Rows": 1,
-                    "BgColor": "#ffefe3" # Yellow color
-                }
+               # {
+               #     "ActionType": "reply",
+               #     "ActionBody": "Не, но искам да стана клиент",
+               #     "Text": "Не, но искам да стана клиент",
+               #     "TextSize": "regular",
+               #     "Columns": 3, # Change this value as needed
+               #     "Rows": 1,
+               #     "BgColor": "#ffefe3" # Yellow color
+               # }
             ]
         }
     }
@@ -103,7 +103,7 @@ def send_viber_typing_status(user_id, sender_name=None, sender_avatar=None):
                     "Rows": 1,
                     "BgColor": "#eee3ff",
                     "BgMediaType": "gif",
-                    "BgMedia": "https://cdn.dribbble.com/users/108183/screenshots/3284599/preloader-iii.gif",
+                    "BgMedia": "https://cdn.dribbble.com/users/1152773/screenshots/3832732/loader2.gif",
                     "BgLoop": True,
                     "ActionType": "none",
                     "ActionBody": "...",
@@ -418,5 +418,39 @@ def handle_ai_help_request(user_id):
     }
     headers = get_headers(viber_auth_token=X_VIBER_AUTH_TOKEN)
 
+    response = requests.post(send_message_url, json=send_message_payload, headers=headers)
+    return response.status_code, response.text
+
+
+def send_pricing_plan_message(user_id, contact_name, pricing_plan, delay=None):
+    message_text = f"{contact_name}, за съжаление Вашият абонаментен план *{pricing_plan}* не включва чат поддръжка. \n\nТук можете да се запознаете с цените на нашите абонаментни планове:"
+    status_code, response_text = send_viber_message(user_id, message_text)
+
+    time.sleep(2)
+
+    message_url = "https://cloudcart.com/bg/pricing?utm_source=viberBot"
+    status_code, response_text = send_viber_url_message(user_id, message_url)
+
+
+def send_email_not_found_message(user_id, email):
+    message_text = f"Не е открит потребител с този имейл: {email}. Моля, опитайте отново."
+    status_code, response_text = send_viber_message(user_id, message_text)
+
+
+def send_message_to_user(user_id, message_text):
+    status_code, response_text = send_viber_message(user_id, message_text)
+
+################################# VIBER ONBOARDING #################################
+
+def vo_get_user_details(user_id, message_text):
+    send_message_url = f"{VIBER_API_URL}/send_message"
+    send_message_payload = {
+        "receiver": user_id,
+        "type": "text",
+        "text": message_text,
+        "min_api_version": 7
+        }
+    
+    headers = get_headers(viber_auth_token=X_VIBER_AUTH_TOKEN)
     response = requests.post(send_message_url, json=send_message_payload, headers=headers)
     return response.status_code, response.text

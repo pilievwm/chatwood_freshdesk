@@ -5,7 +5,6 @@ from chatHelpers import get_slack_users, get_latest_conversation
 
 def process_chatwoot_payload(payload):
     event = payload.get('event')
-    print(payload)
     conversation_status = payload.get("status")
     owner_email = payload.get('meta', {}).get('sender', {}).get('custom_attributes', {}).get('owner_email')
     user_id = payload.get('meta', {}).get('sender', {}).get('custom_attributes', {}).get('viberid')    
@@ -30,7 +29,7 @@ def process_chatwoot_payload(payload):
                         
     elif event == "conversation_updated" and conversation_status == "open":
         changed_attributes = payload.get('changed_attributes', [])
-        print(f"Here: {changed_attributes}")
+        # print(f"Here: {changed_attributes}")
         for attr in changed_attributes:
             if 'assignee_id' in attr:
                 previous_value = attr['assignee_id']['previous_value']
@@ -96,7 +95,7 @@ def handle_chatwoot_image_message(payload):
                 sender_avatar = sender.get('avatar_url')
                 message_text = message['content']
                 
-                print("Data URL: ", data_url)
+                # print("Data URL: ", data_url)
                 # Call the function to send the image message in Viber
                 send_viber_image_message(viberid, data_url, sender_name, sender_avatar, message_text=message_text)
 

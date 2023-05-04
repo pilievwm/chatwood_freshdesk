@@ -95,13 +95,13 @@ def process_analyzer_response(analyzer_response, user_id):
     elif "no" in analyzer_response.lower():
         return False
     else:
-        print("The response does not contain 'Yes' or 'No'")
+        #print("The response does not contain 'Yes' or 'No'")
         return False
     
 def wipe_user_chat_history(user_id):
     if user_id in user_chat_histories:
         del user_chat_histories[user_id]
-        print(f"Chat history deleted for user_id: {user_id}")
-    else:
-        print(f"No chat history found for user_id: {user_id}")
+        #print(f"Chat history deleted for user_id: {user_id}")
+    #else:
+        #print(f"No chat history found for user_id: {user_id}")
 
