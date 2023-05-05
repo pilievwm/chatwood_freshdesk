@@ -17,6 +17,9 @@ CHAT_API_URL = os.environ['CHAT_API_URL']
 
 def handle_login_user(request):
     webhook_data = request.get_json()
+    # Check if 'cc_user' is present in the webhook_data
+    if 'cc_user' not in webhook_data['data']['site']['user']:
+        return jsonify({'message': 'cc_user not found, skipping execution'})
     email = webhook_data['data']['admin']['email']
     cc_contact_id = webhook_data['data']['user']['unique_id']
     contact_name = webhook_data['data']['admin']['name']
