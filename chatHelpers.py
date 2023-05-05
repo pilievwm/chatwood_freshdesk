@@ -70,7 +70,16 @@ def update_contact_bot_conversation(contact_id, api_access_token, bot_conversati
 def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar, contact_domain):
     update_contact = f"{CHAT_API_URL}/contacts/{contact_id}"
     update_contact_payload = {
-        "company_name": contact_domain,
+        "additional_attributes": {
+            "description": "",
+            "company_name": contact_domain,
+            "social_profiles": {
+                "github": "",
+                "twitter": "",
+                "facebook": "",
+                "linkedin": ""
+                }
+        },
         "custom_attributes": {
             "role": owner_email,
             "owner": owner_name,
@@ -93,7 +102,16 @@ def create_contact_owner(cc_contact_id, contact_name, contact_email, contact_pho
         "email": contact_email,
         "phone_number": contact_phone,
         "identifier": cc_contact_id,
-        "company_name": contact_domain,
+        "additional_attributes": {
+            "description": "",
+            "company_name": contact_domain,
+            "social_profiles": {
+                "github": "",
+                "twitter": "",
+                "facebook": "",
+                "linkedin": ""
+                }
+        },
         "custom_attributes": {
             "role": owner_email,
             "owner": owner_name,

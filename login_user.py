@@ -20,12 +20,12 @@ def handle_login_user(request):
     email = webhook_data['data']['admin']['email']
     cc_contact_id = webhook_data['data']['user']['unique_id']
     contact_name = webhook_data['data']['admin']['name']
-    contact_phone = webhook_data['data']['admin']['phone_number']
+    contact_phone = webhook_data['data']['admin']['phone_number', '']
     contact_domain = webhook_data['data']['site']['url']
-    owner_name = webhook_data['data']['site']['user']['cc_user']['name']
+    owner_name = webhook_data['data']['site']['user']['cc_user'].get('name', '')
     owner_email = webhook_data['data']['site']['user']['cc_user']['email']
-    owenr_avatar = webhook_data['data']['site']['user']['cc_user']['avatar']
-    owner_phone = webhook_data['data']['site']['user']['cc_user']['phone']
+    owenr_avatar = webhook_data['data']['site']['user']['cc_user']['avatar', '']
+    owner_phone = webhook_data['data']['site']['user']['cc_user']['phone', '']
     plan = webhook_data['data']['site']['plan']
     freshdesk_company_id = webhook_data['data']['site']['freshdesk_id']
     print(contact_domain)
