@@ -9,6 +9,8 @@ def process_chatwoot_payload(payload):
     owner_email = payload.get('meta', {}).get('sender', {}).get('custom_attributes', {}).get('owner_email')
     user_id = payload.get('meta', {}).get('sender', {}).get('custom_attributes', {}).get('viberid')    
     contact_id = payload.get('meta', {}).get('sender', {}).get('id', {})
+    assignee_id = payload.get('meta', {}).get('assignee', {}).get('id')
+    inbox_id = "14"
 
 
     # Get the JSON payload from the request
@@ -23,24 +25,22 @@ def process_chatwoot_payload(payload):
         else:
             conversation_status == "open"
             update_contact_bot_conversation(contact_id, CHAT_API_ACCESS_TOKEN,  bot_conversation="Human")
-            inbox_id = "14"
             latest_conversation = get_latest_conversation(contact_id, inbox_id, CHAT_API_ACCESS_TOKEN)
-            assignee_email = latest_conversation['meta']['assignee']['email']
+            assignee_email = latest_conversation.get('meta', {}).get('assignee', {}).get('email')
             get_slack_users(assignee_email, latest_conversation['id'])
                         
     elif event == "conversation_updated" and conversation_status == "open":
         changed_attributes = payload.get('changed_attributes', [])
         # print(f"Here: {changed_attributes}")
+        
         for attr in changed_attributes:
             if 'assignee_id' in attr:
                 previous_value = attr['assignee_id']['previous_value']
                 current_value = attr['assignee_id']['current_value']
-
                 if previous_value != current_value:
                     assignee = payload.get('meta', {}).get('assignee')
                     if assignee:
                         new_assignee = assignee.get('name')
-
                         send_viber_message(user_id, f"_info: Вашият чат беше пренасочен към {new_assignee}_")
 
 

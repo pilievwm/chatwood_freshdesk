@@ -11,7 +11,7 @@ CHAT_API_ACCESS_TOKEN = os.getenv("CHAT_API_ACCESS_TOKEN")
 CHAT_API_URL = os.getenv("CHAT_API_URL")
 
 def get_team_structure():
-    url = "https://cdncloudcart.com/storage/do_not_delete_sales_support_team.csv?1"
+    url = "https://cdncloudcart.com/storage/do_not_delete_sales_support_team.csv?6"
     response = requests.get(url)
     
     data = response.content.decode("utf-8")

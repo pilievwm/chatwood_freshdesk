@@ -67,7 +67,7 @@ def update_contact_bot_conversation(contact_id, api_access_token, bot_conversati
 
     requests.put(update_contact_url, json=update_contact_payload, headers=headers)
 
-def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar, contact_domain):
+def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar, contact_domain, contact_role):
     update_contact = f"{CHAT_API_URL}/contacts/{contact_id}"
     update_contact_payload = {
         "additional_attributes": {
@@ -81,7 +81,7 @@ def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, 
                 }
         },
         "custom_attributes": {
-            "role": owner_email,
+            "role": contact_role,
             "owner": owner_name,
             "owner_email": owner_email,
             "owner_phone": owner_phone,
@@ -94,7 +94,7 @@ def update_contact_owner(contact_id, api_access_token, owner_email, owner_name, 
     # print(response)
     return response.json()
 
-def create_contact_owner(cc_contact_id, contact_name, contact_email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar, contact_domain):
+def create_contact_owner(cc_contact_id, contact_name, contact_email, contact_phone, api_access_token, owner_email, owner_name, owner_phone, plan, owenr_avatar, contact_domain, contact_role):
     create_contact = f"{CHAT_API_URL}/contacts"
     create_contact_payload = {
         "inbox_id": 14,
@@ -102,6 +102,7 @@ def create_contact_owner(cc_contact_id, contact_name, contact_email, contact_pho
         "email": contact_email,
         "phone_number": contact_phone,
         "identifier": cc_contact_id,
+        "role": contact_role,
         "additional_attributes": {
             "description": "",
             "company_name": contact_domain,
@@ -280,7 +281,7 @@ def get_owner_by_email(owner_email):
         return owner_id, owner_name, owner_status, owner_ta_name, owner_ta_id, owner_ta_status
 
     else:
-        #print(f"Email not found: {owner_email}")  # Debugging line
+        print(f"Email not found: {owner_email}")  # Debugging line
         return None, None, None, None, None, None
 
 def get_user_id_by_email(email, api_access_token):
@@ -320,7 +321,6 @@ def get_slack_users(assignee_email, latest_conversation):
     # Check if the API request was successful
     if response.status_code == 200:
         data = response.json()
-
         if data['ok']:
             slack_userName = data['user']['name']
             slack_userId = data['user']['id']
@@ -338,7 +338,8 @@ def get_slack_users(assignee_email, latest_conversation):
 def send_slack_message(slack_userName, slack_userId, latest_conversation):
     #print(f"Sending slack, {slack_userName}, {slack_userId}")
     headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {SLACK_TOKEN}'
     }
     payload = {
         "channel": f"@{slack_userName}",
@@ -369,8 +370,7 @@ def send_slack_message(slack_userName, slack_userId, latest_conversation):
             }
         ]
     }
-    response = requests.post('https://hooks.slack.com/services/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', headers=headers, data=json.dumps(payload))
-
+    response = requests.post('https://slack.com/api/chat.postMessage', headers=headers, data=json.dumps(payload))
     return response
 
 def get_cloudcart_user_info(user_email):

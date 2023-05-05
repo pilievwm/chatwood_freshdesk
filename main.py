@@ -197,6 +197,7 @@ def process_viber_request(request_data, app):
                 #print(f"Owner ID: {owner_id}")
                 #print("check completed!")
                 for _ in range(1):  
+                    
                     #print("enter the loop")
                     if latest_conversation and (owner_id is not None or owner_ta_id is not None):
                         combined_text = formatHistory(user_id)
@@ -291,7 +292,8 @@ def process_viber_request(request_data, app):
                             # update_contact_owner(contact_id, CHAT_API_ACCESS_TOKEN, owner_email, owner_name)
                             print(f"ELSE Case 7 {action_body} - Bot conv: {bot_conversation}")
                     else:
-                        print('Here no were')
+                        
+                        print(f'Here no were. Latest conversation ID: {latest_conversation}, Owner AM: {owner_name}, Owner TA: {owner_ta_name}, Client ID at CW: {contact_id}')
             
             ###################################### ELSE PLAN IS NOT VALID ###########################################
             
