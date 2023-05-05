@@ -132,7 +132,8 @@ def create_conversation(contact_id, inbox_id, owner_id, api_access_token):
     create_conversation_payload = {
         "contact_id": contact_id,
         "inbox_id": inbox_id,
-        "assignee_id": owner_id
+        "assignee_id": owner_id,
+        "status": "resolved"
     }
 
     headers = {

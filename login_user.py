@@ -22,6 +22,7 @@ def handle_login_user(request):
     contact_name = webhook_data['data']['admin']['name']
     contact_phone = webhook_data['data']['admin'].get('phone_number', '')
     contact_domain = webhook_data['data']['site']['url']
+    cc_user = webhook_data['data']['site']['user'].get('cc_user', {})
     owner_name = webhook_data['data']['site']['user']['cc_user'].get('name', '')
     owner_email = webhook_data['data']['site']['user']['cc_user'].get('email')
     owenr_avatar = webhook_data['data']['site']['user']['cc_user'].get('avatar', '')
