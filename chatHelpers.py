@@ -202,6 +202,20 @@ def chat_message_send(message_text, latest_conversation, private_msg, type):
     response = requests.post(message_create_url, json=message_create_payload, headers=headers)
     return response
 
+def chat_media_message_send(message_media, latest_conversation, private_msg, type):
+    # Create a message in the conversation
+    message_create_url = f"{CHAT_API_URL}/conversations/{latest_conversation['id']}/messages"
+    message_create_payload = {
+        "content": f"![]({message_media})",
+        "message_type": type,
+        "private": private_msg
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "api_access_token": CHAT_API_ACCESS_TOKEN
+    }
+    response = requests.post(message_create_url, json=message_create_payload, headers=headers)
+    return response
 
 def request_contact_search(user_id, api_access_token):
     contact_search_url = f"{CHAT_API_URL}/contacts/filter"

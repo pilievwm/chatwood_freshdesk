@@ -42,7 +42,6 @@ def ping():
 def viber():
     # Get a copy of the request's JSON data
     request_data = request.get_json()
-
     # Check if the event is "conversation_started"
     if request_data.get("event") == "conversation_started":
         result = process_viber_request(request_data, app)

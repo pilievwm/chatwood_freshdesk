@@ -136,16 +136,10 @@ def process_viber_request(request_data, app):
                 message_type = data['message'].get('type', 'text')
                 if message_type == 'text':
                     message_text = data['message']['text']
-                    # Check if the message is equal to the previous one
-                    #with last_messages_lock:
-                    #    if (user_id in last_messages and message_text == last_messages[user_id] and (user_id in last_messages and message_text != "Да, клиент съм") or (user_id in last_messages and message_text != "Не, но искам да стана клиент") or (user_id in last_messages and message_text != "Прекрати чат сесията") or (user_id in last_messages and message_text != "Искам да се свържа с моя акаунт мениджър")):
-                            #print(last_messages)
-                    #        return jsonify({'status': 'message_skipped'}), 200
-                    #    else:
-                    #        last_messages[user_id] = message_text
 
                 elif message_type == 'picture' or message_type == 'video':
                     message_media_url = data['message']['media']
+                    print(message_media_url)
                 else:
                     message_text = None
                     message_media_url = None
@@ -174,7 +168,14 @@ def process_viber_request(request_data, app):
 
             if pricing_plan in ACCEPTED_PLANS:
                 
-                action_body = data['message']['text']
+                message_type = data['message'].get('type', 'text')
+                print(message_type)
+                if message_type == 'text':
+                    action_body = data['message']['text']
+                elif message_type == 'picture' or message_type == 'video':
+                    action_body = data['message']['media']
+                else:
+                    action_body = None
                 
                 contact_name = contact['name']
                 owner_email = contact['custom_attributes']['owner_email']
@@ -280,8 +281,11 @@ def process_viber_request(request_data, app):
                         # Continues conversation with agent                
                         elif bot_conversation == "Human" and not action_body == "Прекрати чат сесията":
                             print(f"Case 5 {action_body} - Bot conv: {bot_conversation}")
-                            chat_message_send(message_text, latest_conversation, False, type="incoming")
-                        
+                            if message_type == 'picture' or message_type == 'video':
+                                # Call the viber_send_media_chat function here
+                                chat_media_message_send(action_body, latest_conversation, False, type="incoming")
+                            else:
+                                chat_message_send(message_text, latest_conversation, False, type="incoming")
                         # User intent to close chat session
                         elif action_body == "Прекрати чат сесията" and bot_conversation == "Human":
                             print(f"Case 6 {action_body} - Bot conv: {bot_conversation}")
