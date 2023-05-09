@@ -206,7 +206,7 @@ def chat_media_message_send(message_media, latest_conversation, private_msg, typ
     # Create a message in the conversation
     message_create_url = f"{CHAT_API_URL}/conversations/{latest_conversation['id']}/messages"
     message_create_payload = {
-        "content": f"![]({message_media})",
+        "content": f"[![]({message_media})]({message_media})",
         "message_type": type,
         "private": private_msg
     }
